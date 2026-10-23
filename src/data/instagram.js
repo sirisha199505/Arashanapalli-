@@ -27,7 +27,7 @@ export const POSTS = [
 ];
 
 /** Hero slides in order: reels play as video, photos fade with a slow zoom. */
-export const HERO_SLIDE_IDS = ['DehJ6YQhadg', 'DdVqVaYgZBE', 'DdIwITnBpmt'];
+export const HERO_SLIDE_IDS = ['DehJ6YQhadg', 'DdVqVaYgZBE', 'DdIwITnBpmt', 'DewRAe8BaqG', 'Dc_KaJph_xP', 'DdDgHyOBnGG', 'Deqmg8-hREq', 'Dc5a_wSBpk1', 'DejrsVShM9f', 'DcnO71Ghu0f'];
 
 /**
  * Story highlights (names and covers match the Instagram profile).

@@ -9,7 +9,6 @@ const SLIDE_MS = 7000;
 /** Staggered entrance delay for the i-th hero element. */
 const delay = (i) => ({ animationDelay: `${100 + i * 110}ms` });
 
-const roundBtn = 'grid h-10 w-10 place-items-center rounded-full border border-white/50 text-white transition hover:bg-white hover:text-ink';
 
 /** One slide: blurred cover fills the area, the full media sits contained (never cropped) in a rounded frame. */
 function HeroMedia({ slide, active }) {
@@ -18,7 +17,8 @@ function HeroMedia({ slide, active }) {
     <div className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!active}>
       <img src={slide.image} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl brightness-75" />
       <div className="absolute inset-0 flex items-center justify-center px-6 pb-20 pt-20 lg:pb-24 lg:pt-24">
-        {slide.video ? (
+        {/* only the visible reel loads its video; others show their cover */}
+        {slide.video && active ? (
           <video src={slide.video} poster={slide.image} autoPlay muted loop playsInline className={media} />
         ) : (
           <img src={slide.image} alt={slide.title} className={media} />
@@ -29,23 +29,22 @@ function HeroMedia({ slide, active }) {
 }
 
 /** Full-bleed cinematic hero: media on the right fading into ivory, copy on the left. */
-export default function Hero({ slides, onExplore, onRequestQuote, onOpenSlide }) {
+export default function Hero({ slides, onExplore, onRequestQuote }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = slides.slides.length;
-  const go = (dir) => setIndex((i) => (i + dir + count) % count);
 
   useEffect(() => {
     if (paused) return;
-    const id = setTimeout(() => go(1), SLIDE_MS);
+    const id = setTimeout(() => setIndex((i) => (i + 1) % count), SLIDE_MS);
     return () => clearTimeout(id);
   });
 
   return (
     <section id="top" className="relative isolate overflow-hidden bg-bg lg:h-svh lg:min-h-[40rem]">
-      {/* media: a banner on phones, the right ~70% on desktop */}
+      {/* media: a banner on phones, the right 60% on desktop */}
       <div
-        className="relative h-[55svh] lg:absolute lg:inset-y-0 lg:left-[30%] lg:right-0 lg:h-auto"
+        className="relative h-[55svh] overflow-hidden lg:absolute lg:inset-y-0 lg:left-[40%] lg:right-0 lg:h-auto"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -53,7 +52,7 @@ export default function Hero({ slides, onExplore, onRequestQuote, onOpenSlide })
           <HeroMedia key={s.id} slide={s} active={i === index} />
         ))}
         {/* soft blend into the ivory copy side (stops before the framed media) */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg to-transparent to-25% lg:bg-gradient-to-r lg:from-bg lg:via-bg/40 lg:via-15% lg:to-transparent lg:to-30%" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-bg to-transparent to-25% lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
 
         <div className="absolute right-8 top-28 hidden text-white xl:block">
           <p className="text-[11px] font-semibold uppercase leading-5 tracking-[0.3em]">
@@ -71,36 +70,10 @@ export default function Hero({ slides, onExplore, onRequestQuote, onOpenSlide })
           </ul>
         </div>
 
-        <div className="absolute bottom-5 right-4 flex items-center gap-6 text-white lg:bottom-8 lg:right-8">
-          <button onClick={() => onOpenSlide(index)} className="group hidden items-center gap-3 text-sm font-semibold sm:flex">
-            <span className="grid h-10 w-10 place-items-center rounded-full border-2 border-white/80 transition group-hover:bg-white group-hover:text-ink">
-              <Icon name="play" className="ml-0.5 h-4 w-4" />
-            </span>
-            Watch Our Story
-          </button>
-          <ol className="flex gap-5 text-xs font-semibold">
-            {slides.slides.map((s, i) => (
-              <li key={s.id}>
-                <button onClick={() => setIndex(i)} aria-label={`Slide ${i + 1}`} className={`flex flex-col items-center gap-1.5 ${i === index ? 'text-white' : 'text-white/55 hover:text-white'}`}>
-                  {String(i + 1).padStart(2, '0')}
-                  <span className={`h-1 w-1 rounded-full bg-white transition ${i === index ? 'opacity-100' : 'opacity-0'}`} />
-                </button>
-              </li>
-            ))}
-          </ol>
-          <div className="flex gap-2">
-            <button onClick={() => go(-1)} aria-label="Previous slide" className={roundBtn}>
-              <Icon name="chevronLeft" className="h-4 w-4" />
-            </button>
-            <button onClick={() => go(1)} aria-label="Next slide" className={roundBtn}>
-              <Icon name="chevronRight" className="h-4 w-4" />
-            </button>
-          </div>
-        </div>
       </div>
 
       {/* copy */}
-      <div className="relative mx-auto flex h-full max-w-7xl items-center px-4 pb-12 lg:pb-0 lg:pt-16">
+      <div className="relative z-10 mx-auto flex h-full max-w-7xl items-center px-4 pb-12 lg:pb-0 lg:pt-16">
         <div className="max-w-xl">
           <p style={delay(0)} className="animate-fade-up text-xs font-semibold uppercase tracking-[0.3em] text-muted">
             {HERO.eyebrow}

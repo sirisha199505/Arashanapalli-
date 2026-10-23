@@ -101,7 +101,6 @@ export default function App() {
           slides={HERO_GROUP}
           onExplore={() => showProducts()}
           onRequestQuote={openDrawer}
-          onOpenSlide={(i) => openStory([HERO_GROUP], 0, i)}
         />
         <Reveal>
           <Collections onPickCategory={(category) => showProducts({ category })} onViewAll={() => showProducts({ category: null })} />

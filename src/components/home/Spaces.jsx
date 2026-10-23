@@ -1,15 +1,16 @@
 import { SPACES } from '../../data/content';
 import { Icon } from '../ui';
 
-const fade = 'absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent';
+// Instagram posters carry text/logos in their top part, so images are anchored to the bottom and zoomed slightly.
+const photo = 'absolute inset-0 h-full w-full origin-bottom object-cover object-bottom';
 
 /** Applications gallery: a large feature panel followed by image cards, edge to edge. */
 export default function Spaces({ onCta }) {
   return (
-    <section id="applications" className="grid scroll-mt-24 grid-cols-2 lg:h-[26rem] lg:grid-cols-[2.2fr_1fr_1fr_1fr_1fr]">
+    <section id="applications" className="grid scroll-mt-24 grid-cols-2 lg:h-[26rem] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
       <div className="relative col-span-2 h-72 overflow-hidden text-white lg:col-span-1 lg:h-auto">
-        <img src={SPACES.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/40 to-transparent" />
+        <img src={SPACES.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full scale-[1.4] object-cover object-[center_58%]" />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />
         <div className="relative flex h-full flex-col justify-center p-8 lg:p-12">
           <p className="text-[11px] font-semibold uppercase tracking-[0.3em] text-white/80">{SPACES.eyebrow}</p>
           <h2 className="mt-3 max-w-xs font-display text-3xl font-semibold leading-tight md:text-4xl">{SPACES.title}</h2>
@@ -20,17 +21,17 @@ export default function Spaces({ onCta }) {
       </div>
 
       {SPACES.items.map((item) => (
-        <div key={item.title} className="group relative h-64 overflow-hidden text-white lg:h-auto">
-          <img src={item.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-          <div className={fade} />
-          <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 p-5">
-            <div>
-              <h3 className="text-lg font-semibold">{item.title}</h3>
-              <p className="mt-1 text-xs text-white/75">{item.text}</p>
+        <div key={item.title} className="group relative h-64 overflow-hidden border-l border-white/10 text-white lg:h-auto">
+          <img src={item.image} alt="" loading="lazy" className={`${photo} scale-[1.3] transition duration-700 group-hover:scale-[1.38]`} />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/35" />
+          <div className="absolute inset-x-0 bottom-0 p-5">
+            <h3 className="truncate text-base font-semibold">{item.title}</h3>
+            <div className="mt-1.5 flex items-center justify-between gap-3">
+              <p className="truncate text-xs text-white/75">{item.text}</p>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 transition group-hover:bg-white group-hover:text-ink">
+                <Icon name="arrow" className="h-3.5 w-3.5" />
+              </span>
             </div>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 transition group-hover:bg-white group-hover:text-ink">
-              <Icon name="arrow" className="h-3.5 w-3.5" />
-            </span>
           </div>
         </div>
       ))}

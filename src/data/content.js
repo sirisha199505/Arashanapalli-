@@ -44,9 +44,9 @@ export const SPACES = {
   title: 'Designed for Every Space',
   image: postImage('Dc5a_wSBpk1'),
   items: [
-    { title: 'Homes & Villas', text: 'Doors, handles, hinges & locks', image: postImage('DdIwITnBpmt') },
+    { title: 'Homes & Villas', text: 'Doors, handles & locks', image: postImage('DdIwITnBpmt') },
     { title: 'Interior Projects', text: 'Panels, laminates & veneers', image: postImage('Dc_KaJph_xP') },
-    { title: 'Builders & Carpenters', text: 'Bulk supply with brand choice', image: postImage('DeWqMdvBZt9') },
+    { title: 'Builders & Carpenters', text: 'Bulk supply, any brand', image: postImage('DeWqMdvBZt9') },
     { title: 'Visit Our Showroom', text: `See it all in ${COMPANY.area}`, image: postImage('DehJ6YQhadg') },
   ],
 };
