@@ -1,38 +1,33 @@
-import { Badge, Button } from '../ui';
-import ProductImage from '../product/ProductImage';
+import { Button } from '../ui';
 import { BRAND_SPEC_FIELDS } from '../../data/catalog';
 import { shortBrandName } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 
-const cell = 'border border-line px-3 py-3 align-top';
-const labelCell = `${cell} sticky left-0 z-10 bg-surface-2 text-left text-sm font-semibold`;
-// alternate row shading so each spec / product reads across the brands
-const rowClass = 'even:bg-surface-2/40';
+const cell = 'border border-line px-3 py-2.5 text-left align-top';
+const labelCell = `${cell} sticky left-0 bg-surface font-medium text-muted`;
 
 const GroupRow = ({ span, children }) => (
   <tr>
-    <th colSpan={span} className="border border-line bg-primary/10 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wider text-primary">
+    <th colSpan={span} className={`${cell} bg-surface-2 font-semibold`}>
       {children}
     </th>
   </tr>
 );
 
-/** Side-by-side table: one column per brand — specs, then a price per product, then totals and an add-to-quote action. */
+/** Plain comparison table: brands across the top; specs, then a price per product, then the total. */
 export default function CompareTable({ comparison, onAddBrand }) {
   const { products, columns, cheapest } = comparison;
   const span = columns.length + 1;
   return (
-    <div className="overflow-x-auto rounded-xl bg-surface">
-      <table className="w-full min-w-[36rem] table-fixed border-collapse text-sm">
-        <thead className="bg-dark text-white">
-          <tr>
-            <th className={`${cell} sticky left-0 z-10 w-44 bg-dark text-left text-sm font-semibold sm:w-56`}>Brand</th>
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[32rem] table-fixed border-collapse bg-surface text-sm">
+        <thead>
+          <tr className="bg-surface-2">
+            <th className={`${cell} sticky left-0 w-40 bg-surface-2 sm:w-52`} />
             {columns.map(({ brand }) => (
-              <th key={brand.id} className={`${cell} text-left`}>
-                <span className="block text-base font-bold">{brand.name}</span>
-                <Badge tone={brand.tier} className="mt-1">
-                  {brand.tier}
-                </Badge>
+              <th key={brand.id} className={cell}>
+                <span className="block font-bold">{brand.name}</span>
+                <span className="text-xs font-normal text-muted">{brand.tier}</span>
               </th>
             ))}
           </tr>
@@ -40,7 +35,7 @@ export default function CompareTable({ comparison, onAddBrand }) {
         <tbody>
           <GroupRow span={span}>Specifications</GroupRow>
           {BRAND_SPEC_FIELDS.map((field) => (
-            <tr key={field.key} className={rowClass}>
+            <tr key={field.key}>
               <th className={labelCell}>{field.label}</th>
               {columns.map(({ brand }) => (
                 <td key={brand.id} className={cell}>
@@ -52,45 +47,28 @@ export default function CompareTable({ comparison, onAddBrand }) {
 
           <GroupRow span={span}>Price per unit (excl. GST)</GroupRow>
           {products.map((product) => (
-            <tr key={product.id} className={rowClass}>
+            <tr key={product.id}>
               <th className={labelCell}>
-                <span className="flex items-center gap-2">
-                  <ProductImage product={product} className="h-9 w-9 shrink-0 rounded-lg border border-line" />
-                  <span>
-                    {product.name}
-                    <span className="block text-xs font-normal text-muted">per {product.unit}</span>
-                  </span>
-                </span>
+                {product.name} <span className="font-normal">/ {product.unit}</span>
               </th>
               {columns.map(({ brand, prices }) => {
                 const price = prices[product.id];
-                if (price === null) return <td key={brand.id} className={`${cell} text-muted`}>Not available</td>;
-                const best = price === cheapest[product.id] && columns.length > 1;
+                const best = price !== null && price === cheapest[product.id] && columns.length > 1;
                 return (
-                  <td key={brand.id} className={cell}>
-                    <span className={`font-bold ${best ? 'text-brand' : ''}`}>{formatCurrency(price)}</span>
-                    {best && (
-                      <Badge tone="success" className="ml-2">
-                        Best price
-                      </Badge>
-                    )}
+                  <td key={brand.id} className={`${cell} ${best ? 'font-semibold text-brand' : ''}`}>
+                    {price === null ? <span className="text-muted">—</span> : formatCurrency(price)}
+                    {best && <span className="ml-1 text-xs">(lowest)</span>}
                   </td>
                 );
               })}
             </tr>
           ))}
 
-          <tr className="bg-primary/5">
-            <th className={labelCell}>
-              Total
-              <span className="block text-xs font-normal text-muted">1 unit of each available item</span>
-            </th>
-            {columns.map(({ brand, total, available }) => (
-              <td key={brand.id} className={cell}>
-                <span className="block text-base font-black">{formatCurrency(total)}</span>
-                <span className="text-xs text-muted">
-                  {available} of {products.length} products available
-                </span>
+          <tr>
+            <th className={`${labelCell} font-semibold text-ink`}>Total</th>
+            {columns.map(({ brand, total }) => (
+              <td key={brand.id} className={`${cell} font-bold`}>
+                {formatCurrency(total)}
               </td>
             ))}
           </tr>
@@ -98,14 +76,15 @@ export default function CompareTable({ comparison, onAddBrand }) {
             <th className={labelCell} />
             {columns.map(({ brand, available }) => (
               <td key={brand.id} className={cell}>
-                <Button size="sm" disabled={!available} onClick={() => onAddBrand(brand.id)}>
-                  Add {shortBrandName(brand)} to quote
+                <Button size="sm" variant="secondary" disabled={!available} onClick={() => onAddBrand(brand.id)}>
+                  Add {shortBrandName(brand)}
                 </Button>
               </td>
             ))}
           </tr>
         </tbody>
       </table>
+      <p className="mt-2 text-xs text-muted">— = not available in this brand. Total is 1 unit of each available product.</p>
     </div>
   );
 }
