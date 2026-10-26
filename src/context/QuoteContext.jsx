@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 import { ACTIONS, quoteReducer } from './quoteReducer';
-import { groupQuotesByBrand } from '../utils/quote';
+import { buildQuote } from '../utils/quote';
 
 const STORAGE_KEY = 'at-quote-items';
 const QuoteContext = createContext(null);
@@ -27,12 +27,12 @@ export function QuoteProvider({ children }) {
   const value = useMemo(
     () => ({
       items,
-      quotes: groupQuotesByBrand(items),
+      quote: buildQuote(items),
       itemCount: items.length,
       addItem: (productId, brandId, quantity) => dispatch({ type: ACTIONS.ADD, payload: { productId, brandId, quantity } }),
       setQuantity: (key, quantity) => dispatch({ type: ACTIONS.SET_QTY, payload: { key, quantity } }),
       removeItem: (key) => dispatch({ type: ACTIONS.REMOVE, payload: { key } }),
-      clearBrand: (brandId) => dispatch({ type: ACTIONS.CLEAR_BRAND, payload: { brandId } }),
+      clearAll: () => dispatch({ type: ACTIONS.CLEAR }),
     }),
     [items],
   );

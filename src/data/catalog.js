@@ -49,13 +49,52 @@ export const CATEGORIES = {
 };
 
 
-/** Brands. `priceFactor` scales a product's base price to give a per-brand rate. */
+/** Brands. `priceFactor` scales a product's base price to give a per-brand rate. `specs` are SAMPLE values — replace with real ones. */
 export const BRANDS = [
-  { id: 'godrej', name: 'Godrej', tier: 'Premium', priceFactor: 1.35 },
-  { id: 'hettich', name: 'Hettich', tier: 'Premium', priceFactor: 1.5 },
-  { id: 'dorset', name: 'Dorset', tier: 'Standard', priceFactor: 1.15 },
-  { id: 'ebco', name: 'Ebco', tier: 'Standard', priceFactor: 1.1 },
-  { id: 'local', name: 'Arashanapalli (House Brand)', tier: 'Economy', priceFactor: 1 },
+  {
+    id: 'godrej',
+    name: 'Godrej',
+    tier: 'Premium',
+    priceFactor: 1.35,
+    specs: { material: 'Stainless steel / brass', finish: 'Satin, antique, gold', warranty: '5 years', certification: 'ISI marked', origin: 'India' },
+  },
+  {
+    id: 'hettich',
+    name: 'Hettich',
+    tier: 'Premium',
+    priceFactor: 1.5,
+    specs: { material: 'Steel, zinc die-cast', finish: 'Nickel, matt black', warranty: '10 years', certification: 'ISO 9001, LGA tested', origin: 'Germany' },
+  },
+  {
+    id: 'dorset',
+    name: 'Dorset',
+    tier: 'Standard',
+    priceFactor: 1.15,
+    specs: { material: 'Stainless steel / zinc', finish: 'Satin, rose gold', warranty: '3 years', certification: 'ISI marked', origin: 'India' },
+  },
+  {
+    id: 'ebco',
+    name: 'Ebco',
+    tier: 'Standard',
+    priceFactor: 1.1,
+    specs: { material: 'Cold-rolled steel', finish: 'Zinc, black powder coat', warranty: '2 years', certification: 'ISO 9001', origin: 'India' },
+  },
+  {
+    id: 'local',
+    name: 'Arashanapalli (House Brand)',
+    tier: 'Economy',
+    priceFactor: 1,
+    specs: { material: 'Aluminium / M.S.', finish: 'Silver, black', warranty: '1 year', certification: 'ISI (selected items)', origin: 'India' },
+  },
+];
+
+/** Rows shown for each brand on the compare page, in this order. */
+export const BRAND_SPEC_FIELDS = [
+  { key: 'material', label: 'Material' },
+  { key: 'finish', label: 'Finish options' },
+  { key: 'warranty', label: 'Warranty' },
+  { key: 'certification', label: 'Certification' },
+  { key: 'origin', label: 'Brand origin' },
 ];
 
 const IMG = (file) => `https://tiimg.tistatic.com/fp/1/586/${file}.jpg`;

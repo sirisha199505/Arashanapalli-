@@ -24,10 +24,10 @@ export default function Spaces({ onCta }) {
         <div key={item.title} className="group relative h-64 overflow-hidden border-l border-white/10 text-white lg:h-auto">
           <img src={item.image} alt="" loading="lazy" className={`${photo} scale-[1.3] transition duration-700 group-hover:scale-[1.38]`} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-black/35" />
-          <div className="absolute inset-x-0 bottom-0 p-5">
-            <h3 className="truncate text-base font-semibold">{item.title}</h3>
+          <div className="absolute inset-x-0 bottom-0 p-4 lg:p-5">
+            <h3 className="text-base font-semibold leading-snug lg:truncate">{item.title}</h3>
             <div className="mt-1.5 flex items-center justify-between gap-3">
-              <p className="truncate text-xs text-white/75">{item.text}</p>
+              <p className="text-xs text-white/75 lg:truncate">{item.text}</p>
               <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-white/70 transition group-hover:bg-white group-hover:text-ink">
                 <Icon name="arrow" className="h-3.5 w-3.5" />
               </span>

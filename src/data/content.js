@@ -55,7 +55,7 @@ export const WHY_US = {
   items: [
     { icon: 'diamond', title: 'Quality Products', text: 'Genuine, durable hardware from trusted brands.' },
     { icon: 'box', title: 'Wide Product Range', text: 'Door, furniture and interior fittings in one place.' },
-    { icon: 'file', title: 'Brand-wise Quotes', text: 'Compare brands with a separate quote for each.' },
+    { icon: 'file', title: 'One Combined Quote', text: 'Mix brands across door & furniture fittings in a single quote.' },
     { icon: 'headset', title: 'Customer Support', text: 'Help with bulk orders and special enquiries.' },
   ],
 };
@@ -63,12 +63,12 @@ export const WHY_US = {
 export const ABOUT = {
   eyebrow: `About ${COMPANY.name}`,
   title: `Your Hardware Partner Since ${COMPANY.established}`,
-  text: `${COMPANY.name} has served ${COMPANY.area} for over five decades with door hardware, furniture fittings and interior products. We help homeowners, carpenters and builders choose the right brand for every budget — with honest advice and brand-wise quotes.`,
+  text: `${COMPANY.name} has served ${COMPANY.area} for over five decades with door hardware, furniture fittings and interior products. We help homeowners, carpenters and builders choose the right brand for every budget — with honest advice and instant combined quotes.`,
   image: postImage('DcnO71Ghu0f'),
   points: [
     { icon: 'layers', text: 'Wide product range' },
     { icon: 'tag', text: 'Multiple brands to compare' },
-    { icon: 'file', text: 'Instant brand-wise quotes' },
+    { icon: 'file', text: 'Instant combined quotes' },
     { icon: 'pin', text: `Store in ${COMPANY.area}` },
     { icon: 'chat', text: 'Dedicated support on WhatsApp' },
   ],
@@ -78,6 +78,20 @@ export const SECTIONS = {
   products: { eyebrow: 'Shop', title: 'Our Products', subtitle: 'Choose a product and get a quote by brand' },
   brands: { eyebrow: 'Trusted brands we stock' },
   instagram: { eyebrow: 'Follow our work', title: 'From Our Instagram' },
+};
+
+/** Full-page combined quote. `icons` maps each category to its section icon. */
+export const QUOTE_PAGE = {
+  eyebrow: 'Combined Quote',
+  title: 'Your Quote',
+  subtitle: 'Door hardware and furniture accessories together — pick any brand for each item and send one quote.',
+  icons: { [CATEGORIES.DOOR]: 'door', [CATEGORIES.FURNITURE]: 'monitor' },
+};
+
+export const COMPARE_PAGE = {
+  eyebrow: 'Compare Brands',
+  title: 'Compare Products by Brand',
+  subtitle: 'Pick one or more products, then choose up to 3 brands to see specifications and prices side by side.',
 };
 
 export const CTA = {

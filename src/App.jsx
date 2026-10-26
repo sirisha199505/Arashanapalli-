@@ -14,7 +14,9 @@ import ProductGrid from './components/product/ProductGrid';
 import SellerProfile from './components/profile/SellerProfile';
 import Reviews from './components/profile/Reviews';
 import BrandSelectModal from './components/quote/BrandSelectModal';
-import QuoteDrawer from './components/quote/QuoteDrawer';
+import QuotePage from './components/quote/QuotePage';
+import ComparePage from './components/compare/ComparePage';
+import CompareBar from './components/compare/CompareBar';
 import StoriesRow from './components/stories/StoriesRow';
 import StoryViewer from './components/stories/StoryViewer';
 import InstagramGallery from './components/stories/InstagramGallery';
@@ -22,8 +24,9 @@ import { Reveal, Section, Tabs } from './components/ui';
 import { PRODUCTS } from './data/catalog';
 import { SECTIONS } from './data/content';
 import { useQuote } from './context/QuoteContext';
+import useHashRoute from './hooks/useHashRoute';
 import useSeenStories from './hooks/useSeenStories';
-import { filterProducts, getCategories } from './utils/catalog';
+import { filterProducts, getCategories, getProduct } from './utils/catalog';
 import { getHeroGroup, getPostsGroup, getStoryGroups } from './utils/stories';
 
 const CATEGORIES = getCategories();
@@ -40,20 +43,20 @@ const TABS = [
 const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
 
 export default function App() {
-  const { quotes, itemCount, addItem, setQuantity, removeItem, clearBrand } = useQuote();
+  const { quote, itemCount, addItem, setQuantity, removeItem, clearAll } = useQuote();
   const [activeTab, setActiveTab] = useState('products');
   // one filter state drives the header search, collection cards and product filters
   const [filters, setFilters] = useState({ category: null, search: '' });
   const [activeProduct, setActiveProduct] = useState(null);
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const quotePage = useHashRoute('quote');
+  const comparePage = useHashRoute('compare');
+  const [compareIds, setCompareIds] = useState([]);
   const { seen, markSeen } = useSeenStories();
   // { groups, start: { groupIndex, slideIndex } } while the story viewer is open
   const [story, setStory] = useState(null);
 
   const products = useMemo(() => filterProducts(PRODUCTS, filters), [filters]);
   const closeBrandModal = useCallback(() => setActiveProduct(null), []);
-  const closeDrawer = useCallback(() => setDrawerOpen(false), []);
-  const openDrawer = () => setDrawerOpen(true);
   const closeStory = useCallback(() => setStory(null), []);
   const openStory = (groups, groupIndex, slideIndex = 0) => setStory({ groups, start: { groupIndex, slideIndex } });
 
@@ -68,10 +71,24 @@ export default function App() {
     scrollToProducts();
   };
 
+  const toggleCompare = useCallback(
+    (id) => setCompareIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])),
+    [],
+  );
+  const compareQuoteProducts = () => {
+    setCompareIds([...new Set(quote.lines.map((l) => l.product.id))]);
+    comparePage.open();
+  };
+  // adds 1 unit of every compared product this brand carries
+  const addBrandToQuote = (productIds, brandId) => {
+    productIds.filter((id) => getProduct(id).brandIds.includes(brandId)).forEach((id) => addItem(id, brandId, 1));
+    quotePage.open();
+  };
+
   const handleAdd = (productId, brandId, quantity) => {
     addItem(productId, brandId, quantity);
     setActiveProduct(null);
-    setDrawerOpen(true);
+    quotePage.open();
   };
 
   const PANELS = {
@@ -79,7 +96,7 @@ export default function App() {
     products: (
       <>
         <ProductFilters categories={CATEGORIES} filters={filters} onChange={setFilters} />
-        <ProductGrid products={products} onQuote={setActiveProduct} />
+        <ProductGrid products={products} onQuote={setActiveProduct} compareIds={compareIds} onToggleCompare={toggleCompare} />
       </>
     ),
     reviews: <Reviews />,
@@ -89,65 +106,72 @@ export default function App() {
     <>
       <Header
         quoteCount={itemCount}
-        onOpenQuotes={openDrawer}
-        onGetQuote={() => showProducts()}
+        onOpenQuotes={quotePage.open}
+        onGetQuote={quotePage.open}
         search={filters.search}
         onSearch={setSearch}
         onSearchSubmit={() => showProducts()}
       />
 
-      <main>
-        <Hero
-          slides={HERO_GROUP}
-          onExplore={() => showProducts()}
-          onRequestQuote={openDrawer}
+      {quotePage.active ? (
+        <QuotePage
+          quote={quote}
+          onBack={quotePage.close}
+          onAddProduct={setActiveProduct}
+          onQuantityChange={setQuantity}
+          onRemove={removeItem}
+          onClear={clearAll}
+          onCompare={compareQuoteProducts}
         />
-        <Reveal>
-          <Collections onPickCategory={(category) => showProducts({ category })} onViewAll={() => showProducts({ category: null })} />
-        </Reveal>
-        <WhyUs />
-        <Spaces onCta={() => showProducts()} />
+      ) : comparePage.active ? (
+        <ComparePage productIds={compareIds} onToggleProduct={toggleCompare} onBack={comparePage.close} onAddBrand={addBrandToQuote} />
+      ) : (
+        <main>
+          <Hero
+            slides={HERO_GROUP}
+            onExplore={() => showProducts()}
+            onRequestQuote={quotePage.open}
+          />
+          <Reveal>
+            <Collections onPickCategory={(category) => showProducts({ category })} onViewAll={() => showProducts({ category: null })} />
+          </Reveal>
+          <WhyUs />
+          <Spaces onCta={() => showProducts()} />
 
-        <Reveal>
-          <Section id="products" {...SECTIONS.products}>
-            <div className="space-y-6">
-              <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
-              <div role="tabpanel" className="space-y-6">
-                {PANELS[activeTab]}
+          <Reveal>
+            <Section id="products" {...SECTIONS.products}>
+              <div className="space-y-6">
+                <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
+                <div role="tabpanel" className="space-y-6">
+                  {PANELS[activeTab]}
+                </div>
               </div>
-            </div>
-          </Section>
-        </Reveal>
+            </Section>
+          </Reveal>
 
-        <Reveal>
-          <About onLearnMore={showProfile} />
-        </Reveal>
+          <Reveal>
+            <About onLearnMore={showProfile} />
+          </Reveal>
 
-        <Section id="instagram" {...SECTIONS.instagram} className="pb-0 md:pb-0" />
-        <StoriesRow groups={STORY_GROUPS} seen={seen} onOpen={(i) => openStory(STORY_GROUPS, i)} />
-        <InstagramGallery group={POSTS_GROUP} onOpen={(group, i) => openStory([group], 0, i)} />
+          <Section id="instagram" {...SECTIONS.instagram} className="pb-0 md:pb-0" />
+          <StoriesRow groups={STORY_GROUPS} seen={seen} onOpen={(i) => openStory(STORY_GROUPS, i)} />
+          <InstagramGallery group={POSTS_GROUP} onOpen={(group, i) => openStory([group], 0, i)} />
 
-        <BrandsStrip />
-        <Reveal>
-          <CtaBanner />
-        </Reveal>
-      </main>
+          <BrandsStrip />
+          <Reveal>
+            <CtaBanner />
+          </Reveal>
+        </main>
+      )}
 
       <Footer />
-      <MobileNav quoteCount={itemCount} onOpenQuotes={openDrawer} />
+      {!comparePage.active && <CompareBar count={compareIds.length} onCompare={comparePage.open} onClear={() => setCompareIds([])} />}
+      <MobileNav quoteCount={itemCount} onOpenQuotes={quotePage.open} />
 
       {story && <StoryViewer groups={story.groups} start={story.start} onClose={closeStory} onSeen={markSeen} />}
       {activeProduct && (
         <BrandSelectModal key={activeProduct.id} product={activeProduct} onClose={closeBrandModal} onAdd={handleAdd} />
       )}
-      <QuoteDrawer
-        open={drawerOpen}
-        onClose={closeDrawer}
-        quotes={quotes}
-        onQuantityChange={setQuantity}
-        onRemove={removeItem}
-        onClear={clearBrand}
-      />
     </>
   );
 }

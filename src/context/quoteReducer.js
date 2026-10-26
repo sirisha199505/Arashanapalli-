@@ -5,7 +5,7 @@ export const ACTIONS = {
   ADD: 'ADD',
   SET_QTY: 'SET_QTY',
   REMOVE: 'REMOVE',
-  CLEAR_BRAND: 'CLEAR_BRAND',
+  CLEAR: 'CLEAR',
 };
 
 const keyOf = (item) => itemKey(item.productId, item.brandId);
@@ -28,8 +28,8 @@ export const quoteReducer = (items, action) => {
     }
     case ACTIONS.REMOVE:
       return items.filter((i) => keyOf(i) !== action.payload.key);
-    case ACTIONS.CLEAR_BRAND:
-      return items.filter((i) => i.brandId !== action.payload.brandId);
+    case ACTIONS.CLEAR:
+      return [];
     default:
       return items;
   }
