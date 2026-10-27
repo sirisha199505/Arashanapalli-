@@ -28,6 +28,7 @@ const PATHS = {
   send: ['M22 2L11 13', 'M22 2l-7 20-4-9-9-4z'],
   chevronLeft: ['M15 18l-6-6 6-6'],
   chevronRight: ['M9 18l6-6-6-6'],
+  chevronDown: ['M6 9l6 6 6-6'],
   reel: ['M3 5h18v14H3z', 'M3 9h18', 'M8 5l3 4M14 5l3 4', 'M10 12.5v4l3.5-2z'],
 };
 

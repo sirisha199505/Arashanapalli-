@@ -1,5 +1,5 @@
 /** Page copy. Edit wording here — components only render it. */
-import { CATEGORIES, COMPANY, INTERIOR_LINES } from './catalog';
+import { CATEGORIES, COMPANY, INTERIOR_LINES, PRODUCTS } from './catalog';
 import { getProduct } from '../utils/catalog';
 import { postImage } from '../utils/stories';
 
@@ -78,7 +78,19 @@ export const SECTIONS = {
   products: { eyebrow: 'Shop', title: 'Our Products', subtitle: 'Choose a product and get a quote by brand' },
   brands: { eyebrow: 'Trusted brands we stock' },
   instagram: { eyebrow: 'Follow our work', title: 'From Our Instagram' },
+  faq: { eyebrow: 'Good to know', title: 'Frequently Asked Questions' },
 };
+
+/** FAQs carried over from our Tradeindia listing. */
+export const FAQS = [
+  { q: `What is the year of establishment of ${COMPANY.name}?`, a: `${COMPANY.name} was established in ${COMPANY.established}.` },
+  { q: `Who is the Proprietor of ${COMPANY.name}?`, a: `Mr. Amarender is the Proprietor of ${COMPANY.name}.` },
+  { q: `What is the business location of ${COMPANY.name}?`, a: `${COMPANY.name} operates from ${COMPANY.area}, Telangana, India.` },
+  {
+    q: 'How many different products are listed for this company?',
+    a: `${PRODUCTS.length} products are listed across ${Object.values(CATEGORIES).join(' and ').toLowerCase()}, plus ${INTERIOR_LINES.join(', ').toLowerCase()} on enquiry.`,
+  },
+];
 
 /** Full-page combined quote. `icons` maps each category to its section icon. */
 export const QUOTE_PAGE = {

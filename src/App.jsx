@@ -9,6 +9,7 @@ import Spaces from './components/home/Spaces';
 import About from './components/home/About';
 import BrandsStrip from './components/home/BrandsStrip';
 import CtaBanner from './components/home/CtaBanner';
+import Faq from './components/home/Faq';
 import ProductFilters from './components/product/ProductFilters';
 import ProductGrid from './components/product/ProductGrid';
 import SellerProfile from './components/profile/SellerProfile';
@@ -151,6 +152,10 @@ export default function App() {
 
           <Reveal>
             <About onLearnMore={showProfile} />
+          </Reveal>
+
+          <Reveal>
+            <Faq />
           </Reveal>
 
           <Section id="instagram" {...SECTIONS.instagram} className="pb-0 md:pb-0" />
