@@ -92,18 +92,18 @@ export const FAQS = [
   },
 ];
 
-/** Full-page combined quote. `icons` maps each category to its section icon. */
+/** Full-page combined quote. `icons` maps a category to its section icon (others use `defaultIcon`). */
 export const QUOTE_PAGE = {
-  eyebrow: 'Combined Quote',
-  title: 'Your Quote',
-  subtitle: 'Door hardware and furniture accessories together — pick any brand for each item and send one quote.',
+  title: 'Get a Quote',
+  steps: ['Your quote', 'Details & send'],
   icons: { [CATEGORIES.DOOR]: 'door', [CATEGORIES.FURNITURE]: 'monitor' },
+  defaultIcon: 'box',
 };
 
 export const COMPARE_PAGE = {
   eyebrow: 'Compare Brands',
   title: 'Compare Products by Brand',
-  subtitle: 'Pick one or more products, then choose up to 3 brands to see specifications and prices side by side.',
+  subtitle: 'Pick products, then compare up to 3 brands side by side.',
 };
 
 export const CTA = {

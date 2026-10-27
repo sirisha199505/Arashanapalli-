@@ -2,23 +2,36 @@
 import { COMPANY } from '../data/catalog';
 import { formatCurrency, formatDate } from './format';
 import { quoteNumber } from './quote';
+import { formatPhone } from './validation';
 
-export const isCustomerValid = ({ name, phone }) => name.trim().length > 1 && /^\+?[\d\s-]{10,}$/.test(phone.trim());
+const qtyText = ({ quantity, product }) => `${quantity} ${product.unit}${quantity === 1 ? '' : 's'}`;
 
-const sectionToText = ({ category, lines, subtotal }) => [
-  `*${category}*`,
-  ...lines.map((l, i) => `${i + 1}. ${l.product.name} (${l.brand.name}) — ${l.quantity} ${l.product.unit} × ${formatCurrency(l.unitPrice)} = ${formatCurrency(l.amount)}`),
-  `${category} subtotal: ${formatCurrency(subtotal)}`,
-  '',
-];
+const sectionToText = ({ category, lines, subtotal }) => {
+  const priced = lines.filter((l) => l.available);
+  if (!priced.length) return [];
+  return [
+    `*${category}*`,
+    ...priced.map((l, i) => `${i + 1}. ${l.product.name} (${l.brand.name}) — ${qtyText(l)} × ${formatCurrency(l.unitPrice)} = ${formatCurrency(l.amount)}`),
+    `${category} subtotal: ${formatCurrency(subtotal)}`,
+    '',
+  ];
+};
 
-export const quoteToText = ({ sections, totals }, customer) =>
+// items the chosen brand doesn't make still go in the message, so the shop can suggest an alternative
+const unavailableToText = (lines) =>
+  lines.length
+    ? ['*Not available in the chosen brand — please suggest:*', ...lines.map((l) => `• ${l.product.name} (asked: ${l.brand.name}) — ${qtyText(l)}`), '']
+    : [];
+
+export const quoteToText = ({ brands, sections, unavailable, totals }, customer) =>
   [
     `*Quote Request – ${COMPANY.name}*`,
     `Quote #: ${quoteNumber()}  |  Date: ${formatDate()}`,
-    `Customer: ${customer.name} (${customer.phone})${customer.city ? `, ${customer.city}` : ''}`,
+    `Customer: ${customer.name.trim()} (${formatPhone(customer.phone)}), ${customer.city.trim()}`,
+    `${brands.length === 1 ? 'Brand' : 'Brands'}: ${brands.map((b) => b.name).join(', ')}`,
     '',
-    ...sections.filter((s) => s.lines.length).flatMap(sectionToText),
+    ...sections.flatMap(sectionToText),
+    ...unavailableToText(unavailable),
     `Subtotal: ${formatCurrency(totals.subtotal)}`,
     `GST: ${formatCurrency(totals.gst)}`,
     `Total: ${formatCurrency(totals.total)}`,

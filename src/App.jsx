@@ -14,7 +14,6 @@ import ProductFilters from './components/product/ProductFilters';
 import ProductGrid from './components/product/ProductGrid';
 import SellerProfile from './components/profile/SellerProfile';
 import Reviews from './components/profile/Reviews';
-import BrandSelectModal from './components/quote/BrandSelectModal';
 import QuotePage from './components/quote/QuotePage';
 import ComparePage from './components/compare/ComparePage';
 import CompareBar from './components/compare/CompareBar';
@@ -44,11 +43,10 @@ const TABS = [
 const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
 
 export default function App() {
-  const { quote, itemCount, addItem, setQuantity, removeItem, clearAll } = useQuote();
+  const { quote, itemCount, addItem, setBrand, setItemBrand, setQuantity, removeItem, clearAll } = useQuote();
   const [activeTab, setActiveTab] = useState('products');
   // one filter state drives the header search, collection cards and product filters
   const [filters, setFilters] = useState({ category: null, search: '' });
-  const [activeProduct, setActiveProduct] = useState(null);
   const quotePage = useHashRoute('quote');
   const comparePage = useHashRoute('compare');
   const [compareIds, setCompareIds] = useState([]);
@@ -57,7 +55,6 @@ export default function App() {
   const [story, setStory] = useState(null);
 
   const products = useMemo(() => filterProducts(PRODUCTS, filters), [filters]);
-  const closeBrandModal = useCallback(() => setActiveProduct(null), []);
   const closeStory = useCallback(() => setStory(null), []);
   const openStory = (groups, groupIndex, slideIndex = 0) => setStory({ groups, start: { groupIndex, slideIndex } });
 
@@ -66,7 +63,6 @@ export default function App() {
     setActiveTab('products');
     scrollToProducts();
   };
-  const setSearch = (search) => setFilters((f) => ({ ...f, search }));
   const showProfile = () => {
     setActiveTab('profile');
     scrollToProducts();
@@ -76,28 +72,36 @@ export default function App() {
     (id) => setCompareIds((ids) => (ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id])),
     [],
   );
+
   const compareQuoteProducts = () => {
-    setCompareIds([...new Set(quote.lines.map((l) => l.product.id))]);
+    setCompareIds(quote.lines.map((l) => l.product.id));
     comparePage.open();
   };
-  // adds 1 unit of every compared product this brand carries
+  // adds 1 unit of every compared product this brand carries, in this brand (other items keep their brands)
   const addBrandToQuote = (productIds, brandId) => {
-    productIds.filter((id) => getProduct(id).brandIds.includes(brandId)).forEach((id) => addItem(id, brandId, 1));
+    productIds
+      .filter((id) => getProduct(id).brandIds.includes(brandId))
+      .forEach((id) => {
+        addItem(id);
+        setItemBrand(id, brandId);
+      });
     quotePage.open();
   };
 
-  const handleAdd = (productId, brandId, quantity) => {
-    addItem(productId, brandId, quantity);
-    setActiveProduct(null);
+  // no brand pop-up: the product goes straight into the quote; the brand is chosen on the quote page
+
+  const quoteFromShop = (product) => {
+    addItem(product.id);
     quotePage.open();
   };
+
 
   const PANELS = {
     profile: <SellerProfile />,
     products: (
       <>
         <ProductFilters categories={CATEGORIES} filters={filters} onChange={setFilters} />
-        <ProductGrid products={products} onQuote={setActiveProduct} compareIds={compareIds} onToggleCompare={toggleCompare} />
+        <ProductGrid key={`${filters.category}|${filters.search}`} products={products} onQuote={quoteFromShop} compareIds={compareIds} onToggleCompare={toggleCompare} />
       </>
     ),
     reviews: <Reviews />,
@@ -109,20 +113,18 @@ export default function App() {
         quoteCount={itemCount}
         onOpenQuotes={quotePage.open}
         onGetQuote={quotePage.open}
-        search={filters.search}
-        onSearch={setSearch}
-        onSearchSubmit={() => showProducts()}
       />
 
       {quotePage.active ? (
         <QuotePage
           quote={quote}
           onBack={quotePage.close}
-          onAddProduct={setActiveProduct}
-          onQuantityChange={setQuantity}
+          onCompare={compareQuoteProducts}
+          onSetQuantity={setQuantity}
+          onSetBrand={setBrand}
+          onSetItemBrand={setItemBrand}
           onRemove={removeItem}
           onClear={clearAll}
-          onCompare={compareQuoteProducts}
         />
       ) : comparePage.active ? (
         <ComparePage productIds={compareIds} onToggleProduct={toggleCompare} onBack={comparePage.close} onAddBrand={addBrandToQuote} />
@@ -174,9 +176,6 @@ export default function App() {
       <MobileNav quoteCount={itemCount} onOpenQuotes={quotePage.open} />
 
       {story && <StoryViewer groups={story.groups} start={story.start} onClose={closeStory} onSeen={markSeen} />}
-      {activeProduct && (
-        <BrandSelectModal key={activeProduct.id} product={activeProduct} onClose={closeBrandModal} onAdd={handleAdd} />
-      )}
     </>
   );
 }

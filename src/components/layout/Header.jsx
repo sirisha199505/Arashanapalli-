@@ -1,10 +1,10 @@
 import { COMPANY } from '../../data/catalog';
 import { NAV_LINKS } from '../../data/content';
 import useScrolled from '../../hooks/useScrolled';
-import { Icon, Logo, SearchBar } from '../ui';
+import { Icon, Logo } from '../ui';
 
 /** Frosted header floating over the hero; turns solid once the page scrolls. */
-export default function Header({ quoteCount, onOpenQuotes, onGetQuote, search, onSearch, onSearchSubmit }) {
+export default function Header({ quoteCount, onOpenQuotes, onGetQuote }) {
   const scrolled = useScrolled();
   return (
     <header
@@ -33,9 +33,6 @@ export default function Header({ quoteCount, onOpenQuotes, onGetQuote, search, o
         </nav>
 
         <div className="ml-auto flex items-center gap-2 xl:ml-0">
-          <div className="hidden w-60 lg:block">
-            <SearchBar size="pill" value={search} onChange={onSearch} onSubmit={onSearchSubmit} />
-          </div>
           <div className="hidden sm:block">
             <button onClick={onOpenQuotes} aria-label={`My quotes (${quoteCount})`} className="relative grid h-10 w-10 place-items-center rounded-full text-ink/70 hover:bg-ink/5 hover:text-ink">
               <Icon name="file" />

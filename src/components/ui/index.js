@@ -8,6 +8,7 @@ export { default as Icon } from './Icon';
 export { default as IconTile } from './IconTile';
 export { default as Logo } from './Logo';
 export { default as Modal } from './Modal';
+export { default as MultiSelect } from './MultiSelect';
 export { default as QuantityInput } from './QuantityInput';
 export { default as Reveal } from './Reveal';
 export { default as SearchBar } from './SearchBar';
