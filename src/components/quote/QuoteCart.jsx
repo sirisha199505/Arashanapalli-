@@ -5,8 +5,7 @@ import ProductSearch from './ProductSearch';
 import QuoteLineRow from './QuoteLineRow';
 import TotalsSummary from './TotalsSummary';
 import { PRODUCTS } from '../../data/catalog';
-import { QUOTE_PAGE } from '../../data/content';
-import { getCategories } from '../../utils/catalog';
+import { getCategories, getCategoryIcon } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 
 const CATEGORIES = getCategories();
@@ -57,7 +56,7 @@ export default function QuoteCart({ quote, onSetItemBrand, onSetQuantity, onRemo
               <section key={s.category} className="mt-4">
                 <div className="flex items-center justify-between border-b border-line pb-2">
                   <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <Icon name={QUOTE_PAGE.icons[s.category] ?? QUOTE_PAGE.defaultIcon} className="h-4 w-4 text-primary" />
+                    <Icon name={getCategoryIcon(s.category)} className="h-4 w-4 text-primary" />
                     {s.category}
                   </h3>
                   {s.subtotal > 0 && <span className="text-sm font-bold">{formatCurrency(s.subtotal)}</span>}

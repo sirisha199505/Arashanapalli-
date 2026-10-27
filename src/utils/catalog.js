@@ -1,5 +1,5 @@
 // Pure lookup helpers over the catalog (the single source of truth).
-import { BRANDS, COMPANY, COMPANY_FACTS, INTERIOR_LINES, PRODUCTS } from '../data/catalog';
+import { BRANDS, CATEGORIES, CATEGORY_ICONS, COMPANY, COMPANY_FACTS, PRODUCTS } from '../data/catalog';
 
 const byId = (list) => Object.fromEntries(list.map((item) => [item.id, item]));
 
@@ -20,8 +20,12 @@ export const getUnitPrice = (product, brand) => Math.round(product.basePrice * b
 /** Lowest price across the brands a product is available in. */
 export const getStartingPrice = (product) => Math.min(...getBrandsForProduct(product).map((b) => getUnitPrice(product, b)));
 
-const CATEGORY_LIST = [...new Set(PRODUCTS.map((p) => p.category))];
+// categories that have products, in the order CATEGORIES lists them
+const USED = new Set(PRODUCTS.map((p) => p.category));
+const CATEGORY_LIST = Object.values(CATEGORIES).filter((c) => USED.has(c));
 export const getCategories = () => CATEGORY_LIST;
+
+export const getCategoryIcon = (category) => CATEGORY_ICONS[category] ?? 'box';
 
 // Lowercased text each product is searched against — built once so search stays fast on large catalogs.
 const buildSearchText = (p) => [p.name, p.category, p.description, ...getBrandsForProduct(p).map((b) => b.name)].join(' ').toLowerCase();
@@ -83,7 +87,7 @@ export const searchCatalog = (products, { search = '', category = null, brandIds
 /** Headline numbers for the hero — derived from the data, never typed in. */
 export const getStats = (now = new Date()) => [
   { key: 'years', value: `${now.getFullYear() - COMPANY.established}+`, label: 'Years of trust' },
-  { key: 'lines', value: `${PRODUCTS.length + INTERIOR_LINES.length}+`, label: 'Product lines' },
+  { key: 'lines', value: `${PRODUCTS.length}+`, label: 'Products' },
   { key: 'brands', value: BRANDS.length, label: 'Brands to compare' },
 ];
 

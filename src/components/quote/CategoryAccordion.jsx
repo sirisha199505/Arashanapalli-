@@ -14,7 +14,7 @@ const ProductRow = memo(function ProductRow({ product, brand, quantity, onSetQua
   return (
     <li className="flex items-center gap-2 py-2 pl-3 pr-1">
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium text-ink">{product.name}</p>
+        <p className="line-clamp-2 text-sm font-medium leading-snug text-ink" title={product.name}>{product.name}</p>
         <p className="text-xs text-ink/70">
           {price} / {product.unit}
         </p>

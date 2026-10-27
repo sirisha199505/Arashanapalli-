@@ -3,7 +3,7 @@ import { Button, Card, EmptyState, Icon } from '../ui';
 import CustomerForm, { CUSTOMER_FIELDS } from './CustomerForm';
 import QuoteLineRow from './QuoteLineRow';
 import TotalsSummary from './TotalsSummary';
-import { QUOTE_PAGE } from '../../data/content';
+import { getCategoryIcon } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { buildMailtoLink, buildWhatsAppLink } from '../../utils/share';
 import { validateCustomer } from '../../utils/validation';
@@ -81,7 +81,7 @@ export default function QuoteDetails({ quote, onEdit, onSetItemBrand, onSetQuant
             <div key={s.category} className="mt-4">
               <div className="flex items-center justify-between border-b border-line pb-2">
                 <p className="flex items-center gap-2 text-sm font-semibold">
-                  <Icon name={QUOTE_PAGE.icons[s.category] ?? QUOTE_PAGE.defaultIcon} className="h-4 w-4 text-primary" />
+                  <Icon name={getCategoryIcon(s.category)} className="h-4 w-4 text-primary" />
                   {s.category}
                 </p>
                 <p className="text-sm font-bold">{formatCurrency(s.subtotal)}</p>

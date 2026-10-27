@@ -29,6 +29,7 @@ const PATHS = {
   chevronLeft: ['M15 18l-6-6 6-6'],
   chevronRight: ['M9 18l6-6-6-6'],
   chevronDown: ['M6 9l6 6 6-6'],
+  bulb: ['M9 18h6', 'M10 22h4', 'M12 2a7 7 0 00-4 12.7V17h8v-2.3A7 7 0 0012 2z'],
   reel: ['M3 5h18v14H3z', 'M3 9h18', 'M8 5l3 4M14 5l3 4', 'M10 12.5v4l3.5-2z'],
 };
 

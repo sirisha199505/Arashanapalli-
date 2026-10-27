@@ -32,7 +32,10 @@ export const getBrandOptions = (items) => {
   });
   const most = Math.max(0, ...options.map((o) => o.available));
   const lowest = most ? Math.min(...options.filter((o) => o.available === most).map((o) => o.subtotal)) : null;
-  return options.map((o) => ({ ...o, budget: lowest !== null && o.available === most && o.subtotal === lowest }));
+  // once there are items, only brands that make at least one of them are worth listing
+  return options
+    .filter((o) => !items.length || o.available > 0)
+    .map((o) => ({ ...o, budget: lowest !== null && o.available === most && o.subtotal === lowest }));
 };
 
 /**

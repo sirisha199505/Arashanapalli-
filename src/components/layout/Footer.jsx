@@ -1,4 +1,4 @@
-import { COMPANY, INTERIOR_LINES } from '../../data/catalog';
+import { COMPANY } from '../../data/catalog';
 import { NAV_LINKS } from '../../data/content';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../data/instagram';
 import { getCategories } from '../../utils/catalog';
@@ -6,7 +6,7 @@ import { phoneUrl } from '../../utils/share';
 import { Icon, Logo } from '../ui';
 
 const COLUMNS = [
-  { title: 'Products', items: [...getCategories(), ...INTERIOR_LINES.slice(0, 3)].map((label) => ({ label, href: '#collections' })) },
+  { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: '#collections' })) },
   { title: 'Quick Links', items: NAV_LINKS },
 ];
 

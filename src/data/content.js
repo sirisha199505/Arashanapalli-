@@ -1,6 +1,6 @@
 /** Page copy. Edit wording here — components only render it. */
-import { CATEGORIES, COMPANY, INTERIOR_LINES, PRODUCTS } from './catalog';
-import { getProduct } from '../utils/catalog';
+import { CATEGORIES, COMPANY, PRODUCTS } from './catalog';
+import { getCategories, getProduct } from '../utils/catalog';
 import { postImage } from '../utils/stories';
 
 export const NAV_LINKS = [
@@ -18,17 +18,17 @@ export const HERO = {
   subtitle: `Door hardware, furniture fittings and interior products for homes, offices and builders. Trusted in ${COMPANY.area} since ${COMPANY.established}.`,
 };
 
-/** Category cards. `category` filters the product list; `enquire` opens WhatsApp. */
+/** Category cards. `category` filters the product list. */
 export const COLLECTIONS = {
   title: 'Explore Our Product Range',
-  text: 'A complete range of door hardware, furniture fittings and interior products for every space.',
+  text: 'Plywood, laminates, panels, door hardware, kitchen and furniture fittings — a complete interior range for every space.',
   items: [
     { title: 'Door Handles', text: 'Mortise, lever & pull handles', image: postImage('DdVqVaYgZBE'), category: CATEGORIES.DOOR },
     { title: 'Hinges & Bolts', text: 'Hinges, tower bolts, aldrops', image: postImage('DdDgHyOBnGG'), category: CATEGORIES.DOOR },
     { title: 'Furniture Fittings', text: 'Keyboard trays, channels, CPU trolleys', image: getProduct('cpu-trolley').image, category: CATEGORIES.FURNITURE, contain: true },
-    { title: 'Safety Lockers', text: 'Godrej home & office lockers', image: postImage('Deqmg8-hREq'), enquire: 'Safety Lockers' },
-    { title: 'Wall Panels', text: '3D, acrylic & decorative panels', image: postImage('Dc5a_wSBpk1'), enquire: 'Wall Panels' },
-    { title: 'Plywood & Laminates', text: INTERIOR_LINES.filter((l) => !['Wall Panels', 'Safety Lockers'].includes(l)).join(', '), image: postImage('Dc_KaJph_xP'), enquire: 'Plywood, Laminates & Veneers' },
+    { title: 'Safety Lockers', text: 'Home & office lockers, safes', image: postImage('Deqmg8-hREq'), category: CATEGORIES.LOCKERS },
+    { title: 'Wall Panels', text: '3D, acrylic, fluted & louvers', image: postImage('Dc5a_wSBpk1'), category: CATEGORIES.WALL_PANELS },
+    { title: 'Plywood & Laminates', text: 'Plywood, boards, laminates, veneers', image: postImage('Dc_KaJph_xP'), category: CATEGORIES.PLYWOOD },
   ],
 };
 
@@ -88,7 +88,7 @@ export const FAQS = [
   { q: `What is the business location of ${COMPANY.name}?`, a: `${COMPANY.name} operates from ${COMPANY.area}, Telangana, India.` },
   {
     q: 'How many different products are listed for this company?',
-    a: `${PRODUCTS.length} products are listed across ${Object.values(CATEGORIES).join(' and ').toLowerCase()}, plus ${INTERIOR_LINES.join(', ').toLowerCase()} on enquiry.`,
+    a: `${PRODUCTS.length} products are listed across ${getCategories().length} categories — from plywood, laminates and wall panels to door hardware, kitchen and furniture fittings.`,
   },
 ];
 
@@ -96,8 +96,6 @@ export const FAQS = [
 export const QUOTE_PAGE = {
   title: 'Get a Quote',
   steps: ['Your quote', 'Details & send'],
-  icons: { [CATEGORIES.DOOR]: 'door', [CATEGORIES.FURNITURE]: 'monitor' },
-  defaultIcon: 'box',
 };
 
 export const COMPARE_PAGE = {
