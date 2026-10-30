@@ -64,6 +64,9 @@ export const CATEGORIES = {
   LIGHTING: MOCK_CATEGORIES.LIGHTING,
 };
 
+/** Category display order. Replaced in place by the live order from the backend (see loadCatalog.js). */
+export const CATEGORY_ORDER = Object.values(CATEGORIES);
+
 /** Icon (from components/ui/Icon) for each category — used on quote sections and when a product has no photo. */
 export const CATEGORY_ICONS = {
   [CATEGORIES.PLYWOOD]: 'layers',

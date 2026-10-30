@@ -1,22 +1,30 @@
-// Public API calls only — no tokens, secrets or auth live in the frontend.
-// The backend validates everything and prices quotes itself; nothing sent from here is trusted.
+// API calls. No secrets live in the frontend: the backend validates everything and prices quotes itself.
+// The admin pages pass the signed-in admin's session `token`; the backend decides what it may do.
 // In dev, Vite proxies /api to the backend. Set VITE_API_URL for production builds.
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
-export async function api(path, { method = 'GET', data, timeout = 8000 } = {}) {
+// The backend sends errors as a string or as { field: message | [messages] }
+const errorMessage = (data) =>
+  typeof data === 'string' ? data : data && typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k.replaceAll('_', ' ')}: ${[v].flat().join(', ')}`).join('; ') : '';
+
+export async function api(path, { method = 'GET', data, token, timeout = 8000 } = {}) {
   const res = await fetch(`${BASE_URL}/api${path}`, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
     body: data ? JSON.stringify({ data }) : undefined,
     signal: AbortSignal.timeout(timeout),
     keepalive: method !== 'GET', // lets a quote save finish even if the page navigates to mailto:
   });
   const json = await res.json().catch(() => ({}));
-  if (!res.ok || json.status === 'error') throw new Error(`Request failed (${res.status})`);
-  return json.data;
+  if (!res.ok || json.status === 'error') {
+    const error = new Error(errorMessage(json.data) || `Request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
+  return json;
 }
 
-export const fetchCatalog = () => api('/catalog');
+export const fetchCatalog = () => api('/catalog').then((res) => res.data);
 
 /** Sends only what the customer chose — the server looks up prices and totals. */
 export const submitQuote = ({ lines }, customer, sentVia) =>

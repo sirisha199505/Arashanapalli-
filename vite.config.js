@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     // Forward API calls to the Roda backend (backend/) during development
     proxy: {
-      '/api': 'http://localhost:9292',
+      '/api': process.env.API_PROXY ?? 'http://localhost:9393',
     },
   },
 });

@@ -1,5 +1,5 @@
 // Pure lookup helpers over the catalog (the single source of truth).
-import { BRANDS, CATEGORIES, CATEGORY_ICONS, COMPANY, COMPANY_FACTS, PRODUCTS } from '../data/catalog';
+import { BRANDS, CATEGORY_ICONS, CATEGORY_ORDER, COMPANY, COMPANY_FACTS, PRODUCTS } from '../data/catalog';
 
 const byId = (list) => Object.fromEntries(list.map((item) => [item.id, item]));
 
@@ -20,9 +20,9 @@ export const getUnitPrice = (product, brand) => Math.round(product.basePrice * b
 /** Lowest price across the brands a product is available in. */
 export const getStartingPrice = (product) => Math.min(...getBrandsForProduct(product).map((b) => getUnitPrice(product, b)));
 
-// categories that have products, in the order CATEGORIES lists them
+// categories that have products, in CATEGORY_ORDER; any category missing from that order goes last
 const USED = new Set(PRODUCTS.map((p) => p.category));
-const CATEGORY_LIST = Object.values(CATEGORIES).filter((c) => USED.has(c));
+const CATEGORY_LIST = [...new Set([...CATEGORY_ORDER, ...USED])].filter((c) => USED.has(c));
 export const getCategories = () => CATEGORY_LIST;
 
 export const getCategoryIcon = (category) => CATEGORY_ICONS[category] ?? 'box';
