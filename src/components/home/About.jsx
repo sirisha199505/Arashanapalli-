@@ -1,7 +1,7 @@
 import { ABOUT } from '../../data/content';
 import { Button, Icon } from '../ui';
 
-/** Image, story and a checklist card. */
+/** Image, story and a checklist card. The Learn More button shows only when `onLearnMore` is given. */
 export default function About({ onLearnMore }) {
   return (
     <section id="about" className="mx-auto grid max-w-7xl scroll-mt-24 items-center gap-8 px-4 py-7 md:py-10 lg:grid-cols-[1.1fr_1.2fr_0.9fr]">
@@ -10,9 +10,11 @@ export default function About({ onLearnMore }) {
         <p className="eyebrow">{ABOUT.eyebrow}</p>
         <h2 className="mt-2 font-display text-3xl font-semibold md:text-4xl">{ABOUT.title}</h2>
         <p className="mt-5 leading-relaxed text-muted">{ABOUT.text}</p>
-        <Button className="mt-7" onClick={onLearnMore}>
-          Learn More <Icon name="arrow" className="h-4 w-4" />
-        </Button>
+        {onLearnMore && (
+          <Button className="mt-7" onClick={onLearnMore}>
+            Learn More <Icon name="arrow" className="h-4 w-4" />
+          </Button>
+        )}
       </div>
       <ul className="space-y-4 rounded-xl border border-line bg-surface p-6 shadow-sm">
         {ABOUT.points.map((p) => (

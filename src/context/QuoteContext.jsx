@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 import { ACTIONS, INITIAL_QUOTE, quoteReducer } from './quoteReducer';
+import { getProduct } from '../utils/catalog';
 import { buildQuote } from '../utils/quote';
 
 const STORAGE_KEY = 'at-quote';
@@ -16,12 +17,15 @@ const migrate = (oldItems) => {
   };
 };
 
+// the catalog comes from the backend, so a saved product may since have been removed
+const dropUnknown = (quote) => ({ ...quote, items: quote.items.filter((i) => getProduct(i.productId)) });
+
 const loadQuote = () => {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    if (saved?.items) return saved;
+    if (saved?.items) return dropUnknown(saved);
     const old = JSON.parse(localStorage.getItem(OLD_STORAGE_KEY));
-    return Array.isArray(old) ? migrate(old) : INITIAL_QUOTE;
+    return Array.isArray(old) ? dropUnknown(migrate(old)) : INITIAL_QUOTE;
   } catch {
     return INITIAL_QUOTE;
   }

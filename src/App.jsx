@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+import Page from './components/layout/Page';
 import Header from './components/layout/Header';
 import MobileNav from './components/layout/MobileNav';
 import Footer from './components/layout/Footer';
@@ -20,11 +21,12 @@ import CompareBar from './components/compare/CompareBar';
 import StoriesRow from './components/stories/StoriesRow';
 import StoryViewer from './components/stories/StoryViewer';
 import InstagramGallery from './components/stories/InstagramGallery';
-import { Reveal, Section, Tabs } from './components/ui';
+import ContactPage from './components/contact/ContactPage';
+import { Button, Reveal, Section } from './components/ui';
 import { PRODUCTS } from './data/catalog';
 import { SECTIONS } from './data/content';
 import { useQuote } from './context/QuoteContext';
-import useHashRoute from './hooks/useHashRoute';
+import useRoute, { goBack, navigate } from './hooks/useRoute';
 import useSeenStories from './hooks/useSeenStories';
 import { filterProducts, getCategories, getProduct } from './utils/catalog';
 import { getHeroGroup, getPostsGroup, getStoryGroups } from './utils/stories';
@@ -34,21 +36,16 @@ const STORY_GROUPS = getStoryGroups();
 const POSTS_GROUP = getPostsGroup();
 const HERO_GROUP = getHeroGroup();
 
-const TABS = [
-  { id: 'profile', label: 'Seller Profile' },
-  { id: 'products', label: 'Products & Services' },
-  { id: 'reviews', label: 'Reviews' },
-];
-
-const scrollToProducts = () => document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' });
+// navigation helpers that don't depend on state
+const openQuote = () => navigate('/quote');
+const openCompare = () => navigate('/compare');
+const openProducts = () => navigate('/products');
 
 export default function App() {
   const { quote, itemCount, addItem, setBrand, setItemBrand, setQuantity, removeItem, clearAll } = useQuote();
-  const [activeTab, setActiveTab] = useState('products');
-  // one filter state drives the header search, collection cards and product filters
+  const path = useRoute();
+  // one filter state drives the collection cards and the product filters
   const [filters, setFilters] = useState({ category: null, search: '' });
-  const quotePage = useHashRoute('quote');
-  const comparePage = useHashRoute('compare');
   const [compareIds, setCompareIds] = useState([]);
   const { seen, markSeen } = useSeenStories();
   // { groups, start: { groupIndex, slideIndex } } while the story viewer is open
@@ -60,12 +57,7 @@ export default function App() {
 
   const showProducts = (patch = {}) => {
     setFilters((f) => ({ ...f, ...patch }));
-    setActiveTab('products');
-    scrollToProducts();
-  };
-  const showProfile = () => {
-    setActiveTab('profile');
-    scrollToProducts();
+    openProducts();
   };
 
   const toggleCompare = useCallback(
@@ -75,7 +67,7 @@ export default function App() {
 
   const compareQuoteProducts = () => {
     setCompareIds(quote.lines.map((l) => l.product.id));
-    comparePage.open();
+    openCompare();
   };
   // adds 1 unit of every compared product this brand carries, in this brand (other items keep their brands)
   const addBrandToQuote = (productIds, brandId) => {
@@ -85,97 +77,103 @@ export default function App() {
         addItem(id);
         setItemBrand(id, brandId);
       });
-    quotePage.open();
+    openQuote();
   };
 
   // no brand pop-up: the product goes straight into the quote; the brand is chosen on the quote page
-
   const quoteFromShop = (product) => {
     addItem(product.id);
-    quotePage.open();
+    openQuote();
   };
 
-
-  const PANELS = {
-    profile: <SellerProfile />,
-    products: (
-      <>
-        <ProductFilters categories={CATEGORIES} filters={filters} onChange={setFilters} />
-        <ProductGrid key={`${filters.category}|${filters.search}`} products={products} onQuote={quoteFromShop} compareIds={compareIds} onToggleCompare={toggleCompare} />
-      </>
+  // one page per URL — each nav link opens its own page instead of scrolling a single long page
+  const PAGES = {
+    '/': (
+      <main>
+        <Hero slides={HERO_GROUP} onExplore={() => showProducts()} onRequestQuote={openQuote} />
+        <Reveal>
+          <Collections onPickCategory={(category) => showProducts({ category })} onViewAll={() => showProducts({ category: null })} />
+        </Reveal>
+        <WhyUs />
+        <BrandsStrip />
+        <Reveal>
+          <Faq />
+        </Reveal>
+        <Reveal>
+          <CtaBanner />
+        </Reveal>
+      </main>
     ),
-    reviews: <Reviews />,
+    '/products': (
+      <Page {...SECTIONS.products}>
+        <div className="space-y-6">
+          <ProductFilters categories={CATEGORIES} filters={filters} onChange={setFilters} />
+          <ProductGrid key={`${filters.category}|${filters.search}`} products={products} onQuote={quoteFromShop} compareIds={compareIds} onToggleCompare={toggleCompare} />
+        </div>
+      </Page>
+    ),
+    '/applications': (
+      <Page {...SECTIONS.applications} wide>
+        <Spaces onCta={() => showProducts()} />
+        <Reveal>
+          <CtaBanner />
+        </Reveal>
+      </Page>
+    ),
+    '/about': (
+      <Page {...SECTIONS.about} wide>
+        <About />
+        <Section>
+          <SellerProfile />
+        </Section>
+        <Section {...SECTIONS.reviews}>
+          <Reviews />
+        </Section>
+      </Page>
+    ),
+    '/gallery': (
+      <Page {...SECTIONS.instagram} wide>
+        <StoriesRow groups={STORY_GROUPS} seen={seen} onOpen={(i) => openStory(STORY_GROUPS, i)} />
+        <InstagramGallery group={POSTS_GROUP} onOpen={(group, i) => openStory([group], 0, i)} />
+      </Page>
+    ),
+    '/contact': <ContactPage onGetQuote={openQuote} />,
+    '/quote': (
+      <QuotePage
+        quote={quote}
+        onBack={goBack}
+        onCompare={compareQuoteProducts}
+        onSetQuantity={setQuantity}
+        onSetBrand={setBrand}
+        onSetItemBrand={setItemBrand}
+        onRemove={removeItem}
+        onClear={clearAll}
+      />
+    ),
+    '/compare': <ComparePage productIds={compareIds} onToggleProduct={toggleCompare} onBack={goBack} onAddBrand={addBrandToQuote} />,
   };
 
   return (
     <>
-      <Header
-        quoteCount={itemCount}
-        onOpenQuotes={quotePage.open}
-        onGetQuote={quotePage.open}
-      />
+      <Header path={path} quoteCount={itemCount} onOpenQuotes={openQuote} onGetQuote={openQuote} />
 
-      {quotePage.active ? (
-        <QuotePage
-          quote={quote}
-          onBack={quotePage.close}
-          onCompare={compareQuoteProducts}
-          onSetQuantity={setQuantity}
-          onSetBrand={setBrand}
-          onSetItemBrand={setItemBrand}
-          onRemove={removeItem}
-          onClear={clearAll}
-        />
-      ) : comparePage.active ? (
-        <ComparePage productIds={compareIds} onToggleProduct={toggleCompare} onBack={comparePage.close} onAddBrand={addBrandToQuote} />
-      ) : (
-        <main>
-          <Hero
-            slides={HERO_GROUP}
-            onExplore={() => showProducts()}
-            onRequestQuote={quotePage.open}
-          />
-          <Reveal>
-            <Collections onPickCategory={(category) => showProducts({ category })} onViewAll={() => showProducts({ category: null })} />
-          </Reveal>
-          <WhyUs />
-          <Spaces onCta={() => showProducts()} />
-
-          <Reveal>
-            <Section id="products" {...SECTIONS.products}>
-              <div className="space-y-6">
-                <Tabs tabs={TABS} activeId={activeTab} onChange={setActiveTab} />
-                <div role="tabpanel" className="space-y-6">
-                  {PANELS[activeTab]}
-                </div>
-              </div>
-            </Section>
-          </Reveal>
-
-          <Reveal>
-            <About onLearnMore={showProfile} />
-          </Reveal>
-
-          <Reveal>
-            <Faq />
-          </Reveal>
-
-          <Section id="instagram" {...SECTIONS.instagram} className="pb-0 md:pb-0" />
-          <StoriesRow groups={STORY_GROUPS} seen={seen} onOpen={(i) => openStory(STORY_GROUPS, i)} />
-          <InstagramGallery group={POSTS_GROUP} onOpen={(group, i) => openStory([group], 0, i)} />
-
-          <BrandsStrip />
-          <Reveal>
-            <CtaBanner />
-          </Reveal>
-        </main>
-      )}
+      {PAGES[path] ?? <NotFound />}
 
       <Footer />
-      {!comparePage.active && <CompareBar count={compareIds.length} onCompare={comparePage.open} onClear={() => setCompareIds([])} />}
-      <MobileNav quoteCount={itemCount} onOpenQuotes={quotePage.open} />
+      {path !== '/compare' && <CompareBar count={compareIds.length} onCompare={openCompare} onClear={() => setCompareIds([])} />}
+      <MobileNav path={path} quoteCount={itemCount} onOpenQuotes={openQuote} />
 
       {story && <StoryViewer groups={story.groups} start={story.start} onClose={closeStory} onSeen={markSeen} />}
     </>
+  );
+}
+
+function NotFound() {
+  return (
+    <Page title="Page not found" subtitle="The page you're looking for doesn't exist.">
+      <Button as="a" href="/">
+        Back to home
+      </Button>
+    </Page>
   );
 }

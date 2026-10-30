@@ -1,24 +1,24 @@
 import { Icon } from '../ui';
 
 const ITEMS = [
-  { href: '#top', icon: 'home', label: 'Home' },
-  { href: '#products', icon: 'grid', label: 'Products' },
-  { href: '#brands', icon: 'tag', label: 'Brands' },
+  { href: '/', icon: 'home', label: 'Home' },
+  { href: '/products', icon: 'grid', label: 'Products' },
+  { href: '/gallery', icon: 'instagram', label: 'Gallery' },
 ];
 
-const itemClass = 'flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold text-muted hover:text-primary';
+const itemClass = 'flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px] font-semibold hover:text-primary';
 
 /** Bottom app-style bar on phones. */
-export default function MobileNav({ quoteCount, onOpenQuotes }) {
+export default function MobileNav({ path, quoteCount, onOpenQuotes }) {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex border-t border-line bg-surface/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl sm:hidden">
       {ITEMS.map((item) => (
-        <a key={item.href} href={item.href} className={itemClass}>
+        <a key={item.href} href={item.href} aria-current={path === item.href ? 'page' : undefined} className={`${itemClass} ${path === item.href ? 'text-primary' : 'text-muted'}`}>
           <Icon name={item.icon} />
           {item.label}
         </a>
       ))}
-      <button onClick={onOpenQuotes} className={`${itemClass} relative`}>
+      <button onClick={onOpenQuotes} className={`${itemClass} relative ${path === '/quote' ? 'text-primary' : 'text-muted'}`}>
         <Icon name="file" />
         Quotes
         {quoteCount > 0 && (

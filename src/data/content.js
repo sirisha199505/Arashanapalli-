@@ -3,12 +3,13 @@ import { CATEGORIES, COMPANY, PRODUCTS } from './catalog';
 import { getCategories, getProduct } from '../utils/catalog';
 import { postImage } from '../utils/stories';
 
+/** Each link opens its own page (see the routes in App.jsx). */
 export const NAV_LINKS = [
-  { href: '#collections', label: 'Products' },
-  { href: '#applications', label: 'Applications' },
-  { href: '#about', label: 'About Us' },
-  { href: '#instagram', label: 'Gallery' },
-  { href: '#contact', label: 'Contact' },
+  { href: '/products', label: 'Products' },
+  { href: '/applications', label: 'Applications' },
+  { href: '/about', label: 'About Us' },
+  { href: '/gallery', label: 'Gallery' },
+  { href: '/contact', label: 'Contact' },
 ];
 
 export const HERO = {
@@ -79,6 +80,14 @@ export const SECTIONS = {
   brands: { eyebrow: 'Trusted brands we stock' },
   instagram: { eyebrow: 'Follow our work', title: 'From Our Instagram' },
   faq: { eyebrow: 'Good to know', title: 'Frequently Asked Questions' },
+  applications: { eyebrow: 'Applications', title: 'Spaces We Fit Out', subtitle: 'Hardware and interior products for every room' },
+  about: { eyebrow: 'About Us', title: `About ${COMPANY.name}`, subtitle: `Serving ${COMPANY.area} since ${COMPANY.established}` },
+  reviews: { eyebrow: 'Customers', title: 'Reviews' },
+};
+
+export const CONTACT_PAGE = {
+  section: { eyebrow: 'Contact', title: 'Get in Touch', subtitle: 'Call, WhatsApp or visit our store — we reply quickly.' },
+  whatsAppText: 'Hi, I have a question about your products.',
 };
 
 /** FAQs carried over from our Tradeindia listing. */

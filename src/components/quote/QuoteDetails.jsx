@@ -3,6 +3,7 @@ import { Button, Card, EmptyState, Icon } from '../ui';
 import CustomerForm, { CUSTOMER_FIELDS } from './CustomerForm';
 import QuoteLineRow from './QuoteLineRow';
 import TotalsSummary from './TotalsSummary';
+import { submitQuote } from '../../utils/api';
 import { getCategoryIcon } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { buildMailtoLink, buildWhatsAppLink } from '../../utils/share';
@@ -40,6 +41,8 @@ export default function QuoteDetails({ quote, onEdit, onSetItemBrand, onSetQuant
       document.getElementById(`customer-${first.name}`)?.focus();
       return;
     }
+    // keep a copy for the shop; the WhatsApp / email hand-off doesn't wait on it or fail because of it
+    submitQuote(quote, customer, via).catch((err) => console.warn('Could not save quote request.', err));
     if (via === 'whatsapp') window.open(buildWhatsAppLink(quote, customer), '_blank', 'noopener');
     else window.location.href = buildMailtoLink(quote, customer);
     setSentVia(via);

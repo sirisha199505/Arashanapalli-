@@ -6,7 +6,7 @@ import { phoneUrl } from '../../utils/share';
 import { Icon, Logo } from '../ui';
 
 const COLUMNS = [
-  { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: '#collections' })) },
+  { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: '/products' })) },
   { title: 'Quick Links', items: NAV_LINKS },
 ];
 

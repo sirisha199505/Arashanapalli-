@@ -4,4 +4,10 @@ import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
+  server: {
+    // Forward API calls to the Roda backend (backend/) during development
+    proxy: {
+      '/api': 'http://localhost:9292',
+    },
+  },
 });

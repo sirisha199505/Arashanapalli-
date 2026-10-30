@@ -4,7 +4,7 @@ import useScrolled from '../../hooks/useScrolled';
 import { Icon, Logo } from '../ui';
 
 /** Frosted header floating over the hero; turns solid once the page scrolls. */
-export default function Header({ quoteCount, onOpenQuotes, onGetQuote }) {
+export default function Header({ path, quoteCount, onOpenQuotes, onGetQuote }) {
   const scrolled = useScrolled();
   return (
     <header
@@ -13,7 +13,7 @@ export default function Header({ quoteCount, onOpenQuotes, onGetQuote }) {
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center gap-6 px-4 py-3">
-        <a href="#top" className="flex min-w-0 items-center gap-3">
+        <a href="/" className="flex min-w-0 items-center gap-3">
           <Logo className="h-10 w-10" />
           <span className="min-w-0 font-display text-xl font-semibold leading-[1.05] text-primary">
             {COMPANY.name.split(' ').map((word) => (
@@ -26,7 +26,12 @@ export default function Header({ quoteCount, onOpenQuotes, onGetQuote }) {
 
         <nav className="hidden flex-1 justify-center gap-1 xl:flex">
           {NAV_LINKS.map((link) => (
-            <a key={link.href} href={link.href} className="px-3 py-2 text-sm font-semibold text-ink/80 transition hover:text-primary">
+            <a
+              key={link.href}
+              href={link.href}
+              aria-current={path === link.href ? 'page' : undefined}
+              className={`px-3 py-2 text-sm font-semibold transition hover:text-primary ${path === link.href ? 'text-primary' : 'text-ink/80'}`}
+            >
               {link.label}
             </a>
           ))}
