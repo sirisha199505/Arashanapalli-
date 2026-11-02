@@ -11,6 +11,7 @@ const PAGE_SIZE = 25;
 export default function ProductsPanel({ api, initial = {} }) {
   const [search, setSearch] = useState(initial.search ?? '');
   const [category, setCategory] = useState('');
+  const [newOnly, setNewOnly] = useState(false);
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null); // a product, {} for a new one, or null
   const [actionError, setActionError] = useState(null);
@@ -19,8 +20,8 @@ export default function ProductsPanel({ api, initial = {} }) {
   const lists = useAsync(() => Promise.all([api.categories.list(), api.brands.list()]), [api]);
   const [categories, brands] = lists.result?.map((r) => r.data) ?? [[], []];
   const { result, error, loading, reload } = useAsync(
-    () => api.products.list({ search: query, category, page, page_size: PAGE_SIZE }),
-    [api, query, category, page],
+    () => api.products.list({ search: query, category, new_arrival: newOnly || '', page, page_size: PAGE_SIZE }),
+    [api, query, category, newOnly, page],
   );
   const products = result?.data ?? [];
   const brandName = Object.fromEntries(brands.map((b) => [b.id, b.name]));
@@ -40,7 +41,7 @@ export default function ProductsPanel({ api, initial = {} }) {
       <div className="flex flex-wrap items-center gap-2">
         <input
           type="search"
-          placeholder="Search products"
+          placeholder="Search name or code"
           aria-label="Search products"
           value={search}
           onChange={(e) => (setSearch(e.target.value), setPage(1))}
@@ -59,18 +60,33 @@ export default function ProductsPanel({ api, initial = {} }) {
             </option>
           ))}
         </select>
-        <Button className="ml-auto" size="sm" onClick={() => setEditing({})} disabled={!categories.length}>
-          Add product
-        </Button>
+        <label className="flex cursor-pointer items-center gap-2 text-sm">
+          <input type="checkbox" className="h-4 w-4 accent-primary" checked={newOnly} onChange={(e) => (setNewOnly(e.target.checked), setPage(1))} />
+          New arrivals only
+        </label>
+        <div className="ml-auto flex gap-2">
+          <Button
+            as="a"
+            variant="secondary"
+            size="sm"
+            href={`/admin/stickers?${new URLSearchParams({ ...(category && { category }), ...(query && { search: query }), ...(newOnly && { new_arrival: 'true' }) })}`}
+          >
+            Print stickers
+          </Button>
+          <Button size="sm" onClick={() => setEditing({})} disabled={!categories.length}>
+            Add product
+          </Button>
+        </div>
       </div>
 
       <ErrorNote error={error ?? lists.error ?? actionError} />
       {!loading && !products.length && !error && <EmptyState title="No products found" message="Try another search or category." />}
 
       <Card className={`overflow-x-auto ${loading ? 'opacity-60' : ''}`}>
-        <table className="w-full min-w-[44rem] text-sm">
+        <table className="w-full min-w-[50rem] text-sm">
           <thead className="border-b border-line text-left text-xs text-muted">
             <tr>
+              <th className="px-4 py-2 font-medium">Code</th>
               <th className="px-4 py-2 font-medium">Product</th>
               <th className="px-4 py-2 font-medium">Category</th>
               <th className="px-4 py-2 text-right font-medium">Base price</th>
@@ -81,8 +97,10 @@ export default function ProductsPanel({ api, initial = {} }) {
           <tbody className="divide-y divide-line">
             {products.map((p) => (
               <tr key={p.id} className={p.active ? '' : 'text-muted'}>
+                <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs font-semibold">{p.code}</td>
                 <td className="px-4 py-2.5">
                   <span className="font-medium">{p.name}</span>
+                  {p.new_arrival && <Badge tone="solidPrimary" className="ml-2">New</Badge>}
                   {!p.active && <Badge className="ml-2">Hidden</Badge>}
                   {p.mock && <Badge className="ml-2">Sample</Badge>}
                 </td>

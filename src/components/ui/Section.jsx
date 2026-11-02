@@ -1,7 +1,7 @@
 /** Standard page section: eyebrow label, serif title, optional subtitle and right-side action. */
 export default function Section({ id, eyebrow, title, subtitle, action, className = '', children }) {
   return (
-    <section id={id} className={`mx-auto max-w-7xl scroll-mt-24 px-4 py-7 md:py-10 ${className}`}>
+    <section id={id} className={`mx-auto max-w-7xl scroll-mt-[calc(var(--header-h)+1rem)] px-4 py-7 md:py-10 ${className}`}>
       {(eyebrow || title) && (
         <div className="mb-6 flex items-end justify-between gap-4">
           <div>

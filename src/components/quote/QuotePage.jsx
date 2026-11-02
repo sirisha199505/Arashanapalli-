@@ -24,7 +24,7 @@ function Steps({ step }) {
 }
 
 /** Two-step quote: 1) cart — choose the brand, adjust quantities, add more or proceed; 2) enter validated details and send. */
-export default function QuotePage({ quote, onBack, onSetQuantity, onSetBrand, onSetItemBrand, onRemove, onCompare, onClear }) {
+export default function QuotePage({ quote, savedCount, onSaveQuotation, onBack, onSetQuantity, onSetBrand, onSetItemBrand, onRemove, onCompare, onClear }) {
   const [step, setStep] = useState(0);
   const goTo = (s) => {
     setStep(s);
@@ -32,7 +32,7 @@ export default function QuotePage({ quote, onBack, onSetQuantity, onSetBrand, on
   };
 
   return (
-    <main className="mx-auto max-w-7xl px-4 pb-28 pt-24 sm:pb-14 lg:pt-28">
+    <main className="mx-auto max-w-7xl px-4 pb-28 pt-[calc(var(--header-h)+1.5rem)] sm:pb-14">
       <button onClick={step ? () => goTo(0) : onBack} className="mb-4 inline-flex items-center gap-2 text-sm font-semibold text-ink/70 hover:text-primary">
         <Icon name="arrow" className="h-4 w-4 rotate-180" /> {step ? 'Back to your quote' : 'Back to shop'}
       </button>
@@ -58,6 +58,8 @@ export default function QuotePage({ quote, onBack, onSetQuantity, onSetBrand, on
       {step === 0 ? (
         <QuoteCart
           quote={quote}
+          savedCount={savedCount}
+          onSaveQuotation={onSaveQuotation}
           onSetItemBrand={onSetItemBrand}
           onSetQuantity={onSetQuantity}
           onRemove={onRemove}

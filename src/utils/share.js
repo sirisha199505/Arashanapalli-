@@ -2,6 +2,7 @@
 import { COMPANY } from '../data/catalog';
 import { formatCurrency, formatDate } from './format';
 import { quoteNumber } from './quote';
+import { dynamicCode } from './catalog';
 import { formatPhone } from './validation';
 
 const qtyText = ({ quantity, product }) => `${quantity} ${product.unit}${quantity === 1 ? '' : 's'}`;
@@ -11,7 +12,7 @@ const sectionToText = ({ category, lines, subtotal }) => {
   if (!priced.length) return [];
   return [
     `*${category}*`,
-    ...priced.map((l, i) => `${i + 1}. ${l.product.name} (${l.brand.name}) — ${qtyText(l)} × ${formatCurrency(l.unitPrice)} = ${formatCurrency(l.amount)}`),
+    ...priced.map((l, i) => `${i + 1}. ${l.product.name} (${l.brand.name}) [${dynamicCode(l.product, l.brand)}] — ${qtyText(l)} × ${formatCurrency(l.unitPrice)} = ${formatCurrency(l.amount)}`),
     `${category} subtotal: ${formatCurrency(subtotal)}`,
     '',
   ];

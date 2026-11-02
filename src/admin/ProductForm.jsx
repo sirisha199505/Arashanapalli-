@@ -5,6 +5,7 @@ import { CheckboxField, ErrorNote, SelectField, TextAreaField } from './fields';
 const UNITS = ['piece', 'pair', 'set', 'sheet', 'box', 'roll', 'kg', 'litre', 'metre', 'sq ft'];
 
 const toForm = (p, categories) => ({
+  code: p.code ?? '',
   name: p.name ?? '',
   category: p.category ?? categories[0]?.name ?? '',
   unit: p.unit ?? 'piece',
@@ -12,8 +13,10 @@ const toForm = (p, categories) => ({
   description: p.description ?? '',
   image: p.image ?? '',
   brand_ids: p.brand_ids ?? [],
+  series_ids: p.series_ids ?? [],
   position: p.position ?? 0,
   active: p.active ?? true,
+  new_arrival: p.new_arrival ?? !p.id, // products added from here start as new arrivals
 });
 
 /** Add or edit one product. Prices are the base rate; each brand's price factor is applied on the site. */
@@ -24,8 +27,18 @@ export default function ProductForm({ product, categories, brands, api, onClose,
   const [saving, setSaving] = useState(false);
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.type === 'checkbox' ? e.target.checked : e.target.value }));
+  const seriesOf = (brandId) => brands.find((b) => b.id === brandId)?.series ?? [];
+  // unticking a brand also takes the product out of that brand's series
   const toggleBrand = (id) =>
-    setForm((f) => ({ ...f, brand_ids: f.brand_ids.includes(id) ? f.brand_ids.filter((b) => b !== id) : [...f.brand_ids, id] }));
+    setForm((f) =>
+      f.brand_ids.includes(id)
+        ? { ...f, brand_ids: f.brand_ids.filter((b) => b !== id), series_ids: f.series_ids.filter((sid) => !seriesOf(id).some((x) => x.id === sid)) }
+        : { ...f, brand_ids: [...f.brand_ids, id] },
+    );
+  // at most one series per brand
+  const setSeries = (brandId, seriesId) =>
+    setForm((f) => ({ ...f, series_ids: [...f.series_ids.filter((sid) => !seriesOf(brandId).some((x) => x.id === sid)), ...(seriesId ? [Number(seriesId)] : [])] }));
+  const brandsWithSeries = form.brand_ids.map((id) => brands.find((b) => b.id === id)).filter((b) => b?.series?.length);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -60,7 +73,18 @@ export default function ProductForm({ product, categories, brands, api, onClose,
       }
     >
       <form id="product-form" onSubmit={submit} className="space-y-4">
-        <TextField id="p-name" label="Name" required value={form.name} onChange={set('name')} />
+        <div className="grid gap-4 sm:grid-cols-[10rem_1fr]">
+          <TextField
+            id="p-code"
+            label="Shelf code"
+            placeholder="Automatic"
+            hint={isNew ? 'Leave empty for the next free code' : 'Printed on the shelf sticker'}
+            value={form.code}
+            onChange={set('code')}
+            style={{ fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase' }}
+          />
+          <TextField id="p-name" label="Name" required value={form.name} onChange={set('name')} />
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField id="p-category" label="Category" value={form.category} onChange={set('category')} options={categories.map((c) => ({ value: c.name, label: c.name }))} />
           <SelectField id="p-unit" label="Sold per" value={form.unit} onChange={set('unit')} options={unitOptions.map((u) => ({ value: u, label: u }))} />
@@ -82,7 +106,27 @@ export default function ProductForm({ product, categories, brands, api, onClose,
             ))}
           </div>
         </fieldset>
+        <div className="flex flex-wrap gap-x-6 gap-y-2">
+          {brandsWithSeries.length > 0 && (
+          <fieldset>
+            <legend className="mb-2 text-xs font-medium text-muted">Series (class → brand → series)</legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              {brandsWithSeries.map((b) => (
+                <SelectField
+                  key={b.id}
+                  id={`p-series-${b.id}`}
+                  label={`${b.name} series`}
+                  value={b.series.find((x) => form.series_ids.includes(x.id))?.id ?? ''}
+                  onChange={(e) => setSeries(b.id, e.target.value)}
+                  options={[{ value: '', label: 'No series' }, ...b.series.map((x) => ({ value: x.id, label: x.name }))]}
+                />
+              ))}
+            </div>
+          </fieldset>
+        )}
         <CheckboxField id="p-active" label="Show on website" checked={form.active} onChange={set('active')} />
+          <CheckboxField id="p-new" label="New arrival" checked={form.new_arrival} onChange={set('new_arrival')} />
+        </div>
         <ErrorNote error={error} />
       </form>
     </Modal>

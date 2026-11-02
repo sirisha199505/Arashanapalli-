@@ -9,6 +9,7 @@ import CustomersPanel from './CustomersPanel';
 import CategoriesPanel from './CategoriesPanel';
 import BrandsPanel from './BrandsPanel';
 import ProductsPanel from './ProductsPanel';
+import StickerSheet from './StickerSheet';
 import useAsync from './useAsync';
 
 // Sidebar sections; each item is a page at its own /admin/… URL
@@ -74,6 +75,9 @@ export default function AdminApp() {
       />
     );
   }
+
+  // printable page, opened in its own tab from Products → Print stickers
+  if (path === '/admin/stickers') return <StickerSheet api={api} />;
 
   const { Panel } = page;
   return (

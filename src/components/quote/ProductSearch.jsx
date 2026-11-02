@@ -2,18 +2,22 @@ import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { Button, Icon } from '../ui';
 import ProductImage from '../product/ProductImage';
 import { PRODUCTS } from '../../data/catalog';
-import { getStartingPrice, getUnitPrice, searchCatalog } from '../../utils/catalog';
+import { dynamicCode, getStartingPrice, getUnitPrice, parseCode, searchCatalog } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 
 const MAX_SHOWN = 8;
 
-/** Search box with a results dropdown — add products to the quote without leaving the page. `qty` = productId → quantity in the quote. */
+/**
+ * Search box with a results dropdown — add products to the quote without leaving the page. `qty` = productId → quantity in the quote.
+ * A dynamic code ('AT1002-HET') offers that product already set to its brand: onAdd(productId, brandId).
+ */
 export default function ProductSearch({ brand, qty, onAdd }) {
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
   const term = useDeferredValue(search).trim();
   const results = useMemo(() => (term ? searchCatalog(PRODUCTS, { search: term }).results : []), [term]);
+  const byCode = parseCode(term); // { product, brand } when a dynamic code was typed
 
   useEffect(() => {
     if (!open) return undefined;
@@ -43,7 +47,7 @@ export default function ProductSearch({ brand, qty, onAdd }) {
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          placeholder="Search products to add…"
+          placeholder="Name, code or AT1002-HET…"
           aria-label="Search products to add"
           className="min-w-0 flex-1 bg-transparent text-sm text-ink outline-none placeholder:text-ink/50"
         />
@@ -58,11 +62,16 @@ export default function ProductSearch({ brand, qty, onAdd }) {
                   <ProductImage product={p} className="h-10 w-10 shrink-0 rounded-lg border border-line" padding="p-1" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-ink">{p.name}</p>
+                    {p.code && <p className="font-mono text-[11px] font-semibold text-muted">{dynamicCode(p, p === byCode.product ? byCode.brand : null)}</p>}
                     <p className="truncate text-xs text-ink/70">
                       {p.category} · {price(p)}
                     </p>
                   </div>
-                  {qty[p.id] ? (
+                  {p === byCode.product && byCode.brand ? (
+                    <Button size="sm" onClick={() => onAdd(p.id, byCode.brand.id)} aria-label={`Add ${p.name} in ${byCode.brand.name}`}>
+                      Add in {byCode.brand.code}
+                    </Button>
+                  ) : qty[p.id] ? (
                     <span className="flex shrink-0 items-center gap-2">
                       <span className="text-xs font-semibold text-emerald-700">{qty[p.id]} in quote</span>
                       <Button size="sm" variant="secondary" onClick={() => onAdd(p.id)} aria-label={`Add one more ${p.name}`}>

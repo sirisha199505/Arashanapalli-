@@ -148,11 +148,33 @@ export const BRANDS = [
   { id: 'rehau', name: 'Rehau', tier: 'Premium', priceFactor: 1.45, specs: { material: 'PVC, ABS', finish: 'Matched to laminates', warranty: '5 years', certification: 'DIN tested', origin: 'Germany' } },
 ];
 
+// Brand codes (the suffix of a dynamic code, AT1002-HET) — same as the database's starting data.
+// Series (the "individual" level under a brand) are only added in the admin, so the bundled brands have none.
+const BRAND_CODES = {
+  godrej: 'GOD', hettich: 'HET', dorset: 'DOR', ebco: 'EBC', local: 'ARA', greenply: 'GRP', century: 'CEN', kitply: 'KIT', archidply: 'ARC',
+  actiontesa: 'ACT', merino: 'MER', greenlam: 'GRL', royaletouche: 'ROY', hafele: 'HAF', blum: 'BLU', ozone: 'OZO', europa: 'EUR', yale: 'YAL',
+  pidilite: 'FEV', asianpaints: 'ASP', wipro: 'WIP', philips: 'PHI', rehau: 'REH',
+};
+BRANDS.forEach((b) => Object.assign(b, { code: BRAND_CODES[b.id], series: [] }));
+
+// SAMPLE guarantee / support terms by class (same as the database's starting data) — replace with each brand's real terms in the admin.
+const SAMPLE_TERMS = {
+  Premium: { guarantee: 'Manufacturer replacement for any defect', support: 'Brand service network + installation help' },
+  Standard: { guarantee: 'Manufacturer replacement for defects', support: 'Dealer service + installation help' },
+  Economy: { guarantee: 'Store replacement within 6 months', support: 'In-store support at Arashanapalli' },
+};
+BRANDS.forEach((b) => (b.specs = { ...SAMPLE_TERMS[b.tier], ...b.specs }));
+
+/** Brand classes (the top level: class → brand → series), best first. */
+export const BRAND_TIERS = ['Premium', 'Standard', 'Economy'];
+
 /** Rows shown for each brand on the compare page, in this order. */
 export const BRAND_SPEC_FIELDS = [
   { key: 'material', label: 'Material' },
   { key: 'finish', label: 'Finish options' },
   { key: 'warranty', label: 'Warranty' },
+  { key: 'guarantee', label: 'Guarantee' },
+  { key: 'support', label: 'Support' },
   { key: 'certification', label: 'Certification' },
   { key: 'origin', label: 'Brand origin' },
 ];
@@ -263,5 +285,14 @@ const REAL_PRODUCTS = [
   },
 ];
 
-/** Every product: the real TradeIndia listings first, then the MOCK interior range. */
-export const PRODUCTS = [...REAL_PRODUCTS, ...MOCK_PRODUCTS];
+// Same rules the database used for its starting data: codes AT1001… in catalog order,
+// and the last 4 products of each category marked as new arrivals.
+const withCodes = (products) => products.map((p, i) => ({ ...p, code: `AT${1001 + i}` }));
+const withNewArrivals = (products) => {
+  const seen = {}; // products counted so far per category, walking from the end
+  const lastFour = new Set([...products].reverse().filter((p) => (seen[p.category] = (seen[p.category] ?? 0) + 1) <= 4).map((p) => p.id));
+  return products.map((p) => ({ ...p, newArrival: lastFour.has(p.id) }));
+};
+
+/** Every product: the real TradeIndia listings first, then the MOCK interior range. Replaced by the live list from the backend. */
+export const PRODUCTS = withNewArrivals(withCodes([...REAL_PRODUCTS, ...MOCK_PRODUCTS]));

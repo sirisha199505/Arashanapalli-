@@ -1,12 +1,12 @@
 import { COMPANY } from '../../data/catalog';
 import { NAV_LINKS } from '../../data/content';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL } from '../../data/instagram';
-import { getCategories } from '../../utils/catalog';
+import { categoryPath, getCategories } from '../../utils/catalog';
 import { phoneUrl } from '../../utils/share';
 import { Icon, Logo } from '../ui';
 
 const COLUMNS = [
-  { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: '/products' })) },
+  { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: categoryPath(label) })) },
   { title: 'Quick Links', items: NAV_LINKS },
 ];
 

@@ -1,6 +1,7 @@
 const TONES = {
   neutral: 'bg-surface-2 text-muted',
   primary: 'bg-primary/10 text-primary',
+  solidPrimary: 'bg-primary text-white',
   success: 'bg-emerald-600/10 text-emerald-700',
   overlay: 'bg-black/70 text-white backdrop-blur',
   solidSuccess: 'bg-brand text-white',

@@ -2,11 +2,15 @@ import { useState } from 'react';
 import { BRAND_SPEC_FIELDS } from '../data/catalog';
 import { Badge, Button, Card, Modal, TextField } from '../components/ui';
 import { CheckboxField, ErrorNote, SelectField } from './fields';
+import SeriesEditor from './SeriesEditor';
 import useAsync from './useAsync';
 
 const TIERS = ['Premium', 'Standard', 'Economy'];
 
-/** Brands, their price factor (multiplies a product's base price) and the specs shown on the compare page. */
+/**
+ * Brands — the middle level of class (tier) → brand → series — with their code (the suffix of dynamic codes, AT1002-HET),
+ * price factor (multiplies a product's base price), specs shown on the compare page, and their series.
+ */
 export default function BrandsPanel({ api }) {
   const [editing, setEditing] = useState(null);
   const [actionError, setActionError] = useState(null);
@@ -32,11 +36,13 @@ export default function BrandsPanel({ api }) {
       </div>
       <ErrorNote error={error ?? actionError} />
       <Card className={`overflow-x-auto ${loading ? 'opacity-60' : ''}`}>
-        <table className="w-full min-w-[36rem] text-sm">
+        <table className="w-full min-w-[48rem] text-sm">
           <thead className="border-b border-line text-left text-xs text-muted">
             <tr>
+              <th className="px-4 py-2 font-medium">Code</th>
               <th className="px-4 py-2 font-medium">Brand</th>
-              <th className="px-4 py-2 font-medium">Tier</th>
+              <th className="px-4 py-2 font-medium">Class</th>
+              <th className="px-4 py-2 font-medium">Series</th>
               <th className="px-4 py-2 text-right font-medium">Price factor</th>
               <th className="px-4 py-2 font-medium">Warranty</th>
               <th className="px-4 py-2" />
@@ -45,11 +51,15 @@ export default function BrandsPanel({ api }) {
           <tbody className="divide-y divide-line">
             {brands.map((b) => (
               <tr key={b.id} className={b.active ? '' : 'text-muted'}>
+                <td className="px-4 py-2.5 font-mono text-xs font-semibold">{b.code}</td>
                 <td className="px-4 py-2.5 font-medium">
                   {b.name}
                   {!b.active && <Badge className="ml-2">Hidden</Badge>}
                 </td>
                 <td className="px-4 py-2.5">{b.tier && <Badge tone={b.tier}>{b.tier}</Badge>}</td>
+                <td className="max-w-48 truncate px-4 py-2.5 text-muted" title={(b.series ?? []).map((x) => x.name).join(', ')}>
+                  {(b.series ?? []).map((x) => x.name).join(', ') || '—'}
+                </td>
                 <td className="px-4 py-2.5 text-right">× {Number(b.price_factor).toFixed(2)}</td>
                 <td className="px-4 py-2.5">{b.specs?.warranty}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-right">
@@ -75,16 +85,18 @@ export default function BrandsPanel({ api }) {
             setEditing(null);
             reload();
           }}
+          onSeriesChanged={reload}
         />
       )}
     </div>
   );
 }
 
-function BrandForm({ brand, api, onClose, onSaved }) {
+function BrandForm({ brand, api, onClose, onSaved, onSeriesChanged }) {
   const isNew = !brand.id;
   const [form, setForm] = useState({
     name: brand.name ?? '',
+    code: brand.code ?? '',
     tier: brand.tier ?? 'Standard',
     price_factor: brand.price_factor ?? 1,
     specs: Object.fromEntries(BRAND_SPEC_FIELDS.map((f) => [f.key, brand.specs?.[f.key] ?? ''])),
@@ -128,9 +140,20 @@ function BrandForm({ brand, api, onClose, onSaved }) {
       }
     >
       <form id="brand-form" onSubmit={submit} className="space-y-4">
-        <TextField id="b-name" label="Name" required value={form.name} onChange={set('name')} />
+        <div className="grid gap-4 sm:grid-cols-[1fr_9rem]">
+          <TextField id="b-name" label="Name" required value={form.name} onChange={set('name')} />
+          <TextField
+            id="b-code"
+            label="Brand code"
+            placeholder="Automatic"
+            hint="AT1002-HET"
+            value={form.code}
+            onChange={set('code')}
+            style={{ fontFamily: 'ui-monospace, monospace', textTransform: 'uppercase' }}
+          />
+        </div>
         <div className="grid gap-4 sm:grid-cols-3">
-          <SelectField id="b-tier" label="Tier" value={form.tier} onChange={set('tier')} options={TIERS.map((t) => ({ value: t, label: t }))} />
+          <SelectField id="b-tier" label="Class" value={form.tier} onChange={set('tier')} options={TIERS.map((t) => ({ value: t, label: t }))} />
           <TextField
             id="b-factor"
             label="Price factor"
@@ -153,6 +176,13 @@ function BrandForm({ brand, api, onClose, onSaved }) {
         <CheckboxField id="b-active" label="Show on website" checked={form.active} onChange={set('active')} />
         <ErrorNote error={error} />
       </form>
+      <div className="mt-6 border-t border-line pt-5">
+        {isNew ? (
+          <p className="text-sm text-muted">Save the brand first, then add its series here.</p>
+        ) : (
+          <SeriesEditor brand={brand} api={api} onChanged={onSeriesChanged} />
+        )}
+      </div>
     </Modal>
   );
 }

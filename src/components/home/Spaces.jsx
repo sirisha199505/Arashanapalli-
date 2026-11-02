@@ -7,7 +7,7 @@ const photo = 'absolute inset-0 h-full w-full origin-bottom object-cover object-
 /** Applications gallery: a large feature panel followed by image cards, edge to edge. */
 export default function Spaces({ onCta }) {
   return (
-    <section id="applications" className="grid scroll-mt-24 grid-cols-2 lg:h-[26rem] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
+    <section id="applications" className="grid scroll-mt-[calc(var(--header-h)+1rem)] grid-cols-2 lg:h-[26rem] lg:grid-cols-[1.6fr_repeat(4,1fr)]">
       <div className="relative col-span-2 h-72 overflow-hidden text-white lg:col-span-1 lg:h-auto">
         <img src={SPACES.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full scale-[1.4] object-cover object-[center_58%]" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/10" />

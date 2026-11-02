@@ -59,5 +59,6 @@ export function createAdminApi(token, onUnauthorized) {
     products: resource('products'),
     brands: resource('brands'),
     categories: resource('categories'),
+    series: resource('series'),
   };
 }

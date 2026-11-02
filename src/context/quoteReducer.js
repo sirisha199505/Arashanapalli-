@@ -9,6 +9,7 @@ export const ACTIONS = {
   SET_ITEM_BRAND: 'SET_ITEM_BRAND',
   REMOVE: 'REMOVE',
   CLEAR: 'CLEAR',
+  LOAD: 'LOAD',
 };
 
 export const INITIAL_QUOTE = { brandId: null, items: [] };
@@ -50,6 +51,11 @@ export const quoteReducer = (state, action) => {
     }
     case ACTIONS.REMOVE:
       return setItems(state, state.items.filter((i) => i.productId !== action.payload.productId));
+    // replace the whole quote with a saved or suggested quotation
+    case ACTIONS.LOAD: {
+      const { brandId = null, items = [] } = action.payload;
+      return { brandId, items: items.map(({ productId, quantity, brandId: own }) => ({ productId, quantity, ...(own && own !== brandId && { brandId: own }) })) };
+    }
     case ACTIONS.CLEAR:
       return INITIAL_QUOTE;
     default:

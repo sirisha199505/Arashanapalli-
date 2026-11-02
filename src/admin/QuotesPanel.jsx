@@ -106,9 +106,10 @@ function QuoteCard({ quote, api, onSaved }) {
       {open && (
         <div className="mt-4 space-y-4 border-t border-line pt-4">
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[34rem] text-sm">
+            <table className="w-full min-w-[40rem] text-sm">
               <thead className="text-left text-xs text-muted">
                 <tr>
+                  <th className="py-1 font-medium">Item code</th>
                   <th className="py-1 font-medium">Product</th>
                   <th className="py-1 font-medium">Brand</th>
                   <th className="py-1 text-right font-medium">Qty</th>
@@ -119,6 +120,7 @@ function QuoteCard({ quote, api, onSaved }) {
               <tbody className="divide-y divide-line">
                 {items.map((item, i) => (
                   <tr key={i}>
+                    <td className="py-1.5 font-mono text-xs font-semibold">{item.dynamic_code ?? item.product_code ?? '—'}</td>
                     <td className="py-1.5">{item.product_name}</td>
                     <td className="py-1.5">{item.brand_name ?? '—'}</td>
                     <td className="py-1.5 text-right">
@@ -131,15 +133,15 @@ function QuoteCard({ quote, api, onSaved }) {
               </tbody>
               <tfoot className="text-right">
                 <tr>
-                  <td colSpan={4} className="pt-2 text-muted">Subtotal</td>
+                  <td colSpan={5} className="pt-2 text-muted">Subtotal</td>
                   <td className="pt-2">{formatCurrency(quote.subtotal ?? 0)}</td>
                 </tr>
                 <tr>
-                  <td colSpan={4} className="text-muted">GST</td>
+                  <td colSpan={5} className="text-muted">GST</td>
                   <td>{formatCurrency(quote.gst ?? 0)}</td>
                 </tr>
                 <tr className="font-semibold">
-                  <td colSpan={4}>Total</td>
+                  <td colSpan={5}>Total</td>
                   <td>{formatCurrency(quote.total ?? 0)}</td>
                 </tr>
               </tfoot>

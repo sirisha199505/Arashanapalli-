@@ -19,7 +19,7 @@ function HeroMedia({ slide, active }) {
   return (
     <div className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!active}>
       <img src={slide.image} alt="" className="absolute inset-0 hidden h-full w-full scale-110 object-cover blur-2xl brightness-75 lg:block" />
-      <div className="absolute inset-0 lg:flex lg:items-center lg:justify-center lg:px-4 lg:pb-8 lg:pt-[5.5rem]">
+      <div className="absolute inset-0 lg:flex lg:items-center lg:justify-center lg:px-4 lg:pb-8 lg:pt-[calc(var(--header-h)+1.5rem)]">
         {/* only the visible reel loads its video; others show their cover */}
         {slide.video && active ? (
           <video src={slide.video} poster={slide.image} autoPlay muted loop playsInline className={media} />
@@ -57,7 +57,7 @@ export default function Hero({ slides, onExplore, onRequestQuote }) {
         {/* phones: dark fade under the copy · desktop: soft blend into the ivory copy side */}
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 via-45% to-black/10 lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
 
-        <div className="absolute right-8 top-28 hidden text-white xl:block">
+        <div className="absolute right-8 top-[calc(var(--header-h)+1.5rem)] hidden text-white xl:block">
           <p className="text-[11px] font-semibold uppercase leading-5 tracking-[0.3em]">
             {HERO_SIDE.title.map((t) => (
               <span key={t} className="block">

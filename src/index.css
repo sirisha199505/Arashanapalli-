@@ -21,6 +21,21 @@
   --glow: rgba(168, 32, 36, 0.16);
 }
 
+/* Height of the fixed site header (components/layout/Header.jsx); pages pad their top by it */
+:root {
+  --header-h: 7.25rem; /* phones: logo row (4rem) + search row (2.5rem + 0.75rem) */
+}
+@media (min-width: 48rem) {
+  :root {
+    --header-h: 4rem; /* tablets: one row */
+  }
+}
+@media (min-width: 80rem) {
+  :root {
+    --header-h: 6.5rem; /* desktop: main row + page links row */
+  }
+}
+
 @theme inline {
   --color-bg: var(--bg);
   --color-surface: var(--surface);

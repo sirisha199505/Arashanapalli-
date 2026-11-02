@@ -40,7 +40,7 @@ export default function CompareTable({ comparison, onRemoveBrand, onAddToQuote }
   const specRows = BRAND_SPEC_FIELDS.filter((f) => !onlyDiff || new Set(columns.map((c) => c.brand.specs[f.key])).size > 1);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-line bg-surface p-4 sm:p-5 [--cols:var(--t)] md:[--cols:var(--md)]" style={vars}>
+    <div className="relative overflow-x-auto rounded-xl border border-line bg-surface p-4 sm:p-5 [--cols:var(--t)] md:[--cols:var(--md)]" style={vars}>
       <div className={columns.length > 2 ? 'min-w-[34rem]' : 'min-w-[18rem]'}>
         <div className="mb-4 flex items-center justify-between gap-3">
           <h2 className="text-lg font-bold">Comparison</h2>

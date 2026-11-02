@@ -9,7 +9,7 @@ export default function Collections({ onPickCategory, onViewAll }) {
   const scroll = () => rail.current?.scrollBy({ left: rail.current.clientWidth * 0.8, behavior: 'smooth' });
 
   return (
-    <section id="collections" className="mx-auto grid max-w-7xl scroll-mt-24 gap-8 px-4 py-10 lg:grid-cols-[18rem_1fr] lg:items-center lg:py-14">
+    <section id="collections" className="mx-auto grid max-w-7xl scroll-mt-[calc(var(--header-h)+1rem)] gap-8 px-4 py-10 lg:grid-cols-[18rem_1fr] lg:items-center lg:py-14">
       <div>
         <h2 className="text-3xl font-light leading-tight tracking-tight md:text-4xl">{COLLECTIONS.title}</h2>
         <p className="mt-4 text-sm leading-relaxed text-muted">{COLLECTIONS.text}</p>

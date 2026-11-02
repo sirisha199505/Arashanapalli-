@@ -1,9 +1,10 @@
-import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { ACTIONS, INITIAL_QUOTE, quoteReducer } from './quoteReducer';
 import { getProduct } from '../utils/catalog';
 import { buildQuote } from '../utils/quote';
 
 const STORAGE_KEY = 'at-quote';
+const SAVED_KEY = 'at-saved-quotes'; // quotations kept to compare: [{ id, name, savedAt, brandId, items }]
 const OLD_STORAGE_KEY = 'at-quote-items'; // earlier format: [{ productId, brandId, quantity }] with a brand per line
 const QuoteContext = createContext(null);
 
@@ -31,8 +32,26 @@ const loadQuote = () => {
   }
 };
 
+const loadSaved = () => {
+  try {
+    const saved = JSON.parse(localStorage.getItem(SAVED_KEY));
+    return Array.isArray(saved) ? saved.map(dropUnknown).filter((q) => q.items.length) : [];
+  } catch {
+    return [];
+  }
+};
+
 export function QuoteProvider({ children }) {
   const [state, dispatch] = useReducer(quoteReducer, undefined, loadQuote);
+  const [saved, setSaved] = useState(loadSaved);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(SAVED_KEY, JSON.stringify(saved));
+    } catch {
+      /* storage unavailable — saved quotations last until the page is closed */
+    }
+  }, [saved]);
 
   useEffect(() => {
     try {
@@ -52,11 +71,26 @@ export function QuoteProvider({ children }) {
       setItemBrand: (productId, brandId) => dispatch({ type: ACTIONS.SET_ITEM_BRAND, payload: { productId, brandId } }),
       removeItem: (productId) => dispatch({ type: ACTIONS.REMOVE, payload: { productId } }),
       clearAll: () => dispatch({ type: ACTIONS.CLEAR }),
+      loadQuotation: (quotation) => dispatch({ type: ACTIONS.LOAD, payload: quotation }),
+      removeSaved: (id) => setSaved((list) => list.filter((q) => q.id !== id)),
     }),
     [],
   );
 
-  const value = useMemo(() => ({ ...actions, quote: buildQuote(state), itemCount: state.items.length }), [actions, state]);
+  // keep the current quote as a named quotation to compare later (its brand choices and quantities)
+  const saveQuotation = useCallback(
+    (name) => {
+      const quotation = { id: `q${Date.now()}`, name: name.trim() || `Option ${saved.length + 1}`, savedAt: new Date().toISOString(), ...state };
+      setSaved((list) => [...list, quotation]);
+      return quotation;
+    },
+    [saved.length, state],
+  );
+
+  const value = useMemo(
+    () => ({ ...actions, saveQuotation, savedQuotations: saved, state, quote: buildQuote(state), itemCount: state.items.length }),
+    [actions, saveQuotation, saved, state],
+  );
 
   return <QuoteContext.Provider value={value}>{children}</QuoteContext.Provider>;
 }

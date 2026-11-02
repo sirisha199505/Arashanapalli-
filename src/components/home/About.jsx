@@ -4,7 +4,7 @@ import { Button, Icon } from '../ui';
 /** Image, story and a checklist card. The Learn More button shows only when `onLearnMore` is given. */
 export default function About({ onLearnMore }) {
   return (
-    <section id="about" className="mx-auto grid max-w-7xl scroll-mt-24 items-center gap-8 px-4 py-7 md:py-10 lg:grid-cols-[1.1fr_1.2fr_0.9fr]">
+    <section id="about" className="mx-auto grid max-w-7xl scroll-mt-[calc(var(--header-h)+1rem)] items-center gap-8 px-4 py-7 md:py-10 lg:grid-cols-[1.1fr_1.2fr_0.9fr]">
       <img src={ABOUT.image} alt="" loading="lazy" className="aspect-[4/3] w-full rounded-xl object-cover shadow-xl lg:aspect-[4/5]" />
       <div>
         <p className="eyebrow">{ABOUT.eyebrow}</p>
