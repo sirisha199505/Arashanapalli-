@@ -1,4 +1,5 @@
 import { memo } from 'react';
+import { useQuote } from '../../context/QuoteContext';
 import { Badge, Button, Card } from '../ui';
 import ProductImage from './ProductImage';
 import { dynamicCode, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice, productPath } from '../../utils/catalog';
@@ -15,6 +16,9 @@ function ProductCard({ product, brand, onQuote, compared, onToggleCompare }) {
   const brands = getBrandsForProduct(product);
   const href = brand ? `${productPath(product)}?brand=${brand.id}` : productPath(product);
   const series = brand && getProductSeries(product, brand);
+  // already selected? show its quantity with − / + instead of the button
+  const { state, setQuantity } = useQuote();
+  const quantity = state.items.find((i) => i.productId === product.id)?.quantity ?? 0;
   return (
     <Card as="article" interactive className="group flex overflow-hidden sm:flex-col">
       <a href={href} className="relative block w-32 shrink-0 self-stretch sm:w-auto" tabIndex={-1} aria-hidden="true">
@@ -48,9 +52,23 @@ function ProductCard({ product, brand, onQuote, compared, onToggleCompare }) {
             <input type="checkbox" checked={compared} onChange={() => onToggleCompare(product.id)} className="h-3.5 w-3.5 accent-primary" />
             Compare
           </label>
-          <Button size="sm" className="rounded-full px-4" onClick={() => onQuote(product, brand)}>
-            Add to quote
-          </Button>
+          {quantity > 0 ? (
+            <div className="flex items-center overflow-hidden rounded-full border border-primary/50 bg-primary/5">
+              <button type="button" onClick={() => setQuantity(product.id, quantity - 1)} aria-label={`One less ${product.name}`} className="grid h-8 w-8 place-items-center font-bold text-primary hover:bg-primary/10">
+                −
+              </button>
+              <span className="min-w-6 text-center text-sm font-bold text-primary" aria-label={`${quantity} in quote`}>
+                {quantity}
+              </span>
+              <button type="button" onClick={() => setQuantity(product.id, quantity + 1)} aria-label={`One more ${product.name}`} className="grid h-8 w-8 place-items-center font-bold text-primary hover:bg-primary/10">
+                +
+              </button>
+            </div>
+          ) : (
+            <Button size="sm" className="rounded-full px-4" onClick={() => onQuote(product, brand)}>
+              Add to quote
+            </Button>
+          )}
         </div>
       </div>
     </Card>

@@ -1,171 +1,245 @@
 import { useState } from 'react';
-import { Badge, Button, Card, Chip, EmptyState } from '../components/ui';
+import { Badge, Button, Card, EmptyState } from '../components/ui';
 import { formatCurrency } from '../utils/format';
-import { ErrorNote, Pager, SelectField, TextAreaField } from './fields';
+import { ErrorNote, Pager } from './fields';
 import useAsync, { useDebounced } from './useAsync';
+import { IN_PROGRESS, statusOf } from '../utils/quoteStatus';
 
-const STATUSES = ['new', 'contacted', 'won', 'lost'];
-const STATUS_TONE = { new: 'primary', contacted: 'neutral', won: 'success', lost: 'neutral' };
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 25;
+const today = () => new Date().toISOString().slice(0, 10);
+const shortDate = (value) => (value ? new Date(value).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : '—');
 
-const formatDateTime = (value) =>
-  new Date(value).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+// tabs across the top (like an orders view), each a preset of filters, with its count from the server
+const TABS = [
+  { id: 'all', label: 'All', filters: {} },
+  { id: 'draft', label: 'Draft', filters: { status: 'draft' } },
+  { id: 'not_contacted', label: 'Not contacted', filters: { status: 'in_progress', contacted: 'false' } },
+  { id: 'contacted', label: 'Contacted', filters: { status: 'contacted' } },
+  { id: 'follow_up_due', label: 'Follow-up due', filters: { follow_up: 'due' } },
+  { id: 'expiring', label: 'Expiring soon', filters: { validity: 'expiring' } },
+  { id: 'expired', label: 'Expired', filters: { validity: 'expired' } },
+  { id: 'accepted', label: 'Accepted', filters: { status: 'accepted' } },
+  { id: 'lost', label: 'Lost', filters: { status: 'lost' } },
+];
+const SOURCES = { online: 'Online', walk_in: 'Walk-in', phone: 'Phone', whatsapp: 'WhatsApp' };
 
-/** Quote requests customers sent from the website, newest first. */
-export default function QuotesPanel({ api, initial = {} }) {
-  const [status, setStatus] = useState(initial.status ?? '');
-  const [search, setSearch] = useState(initial.search ?? '');
+const EMPTY = { search: '', source: '', customer_type: '', contacted: '', validity: '', from: '', to: '', assigned_to: '' };
+
+// links from elsewhere (dashboard, customers) arrive as { status, search, … }; map the old "new" to "not contacted"
+const tabFor = (initial) =>
+  initial.tab ?? (initial.status === 'new' ? 'not_contacted' : (TABS.find((t) => t.filters.status === initial.status && !t.filters.contacted)?.id ?? 'all'));
+
+/** Quotations, newest first — the latest version of each — with tabs and filters on top and a quick "contacted" switch. */
+export default function QuotesPanel({ api, session, initial = {}, onNavigate }) {
+  const limited = session?.role === 3; // Limited sales only ever see their own quotations
+  const staff = useAsync(() => (limited ? Promise.resolve([]) : api.staff()), [api]).result ?? [];
+  const [tab, setTab] = useState(() => tabFor(initial));
+  const [filters, setFilters] = useState({ ...EMPTY, search: initial.search ?? '' });
   const [page, setPage] = useState(1);
-  const query = useDebounced(search);
-  const { result, error, loading, reload } = useAsync(
-    () => api.quotes.list({ status, search: query, page, page_size: PAGE_SIZE }),
-    [api, status, query, page],
-  );
-  const quotes = result?.data ?? [];
+  const [actionError, setActionError] = useState(null);
+  const search = useDebounced(filters.search);
+  // the tab's preset, then any filter chosen below (a chosen filter wins; empty ones leave the preset)
+  const chosen = Object.fromEntries(Object.entries({ ...filters, search }).filter(([, v]) => v !== ''));
+  const params = { ...TABS.find((t) => t.id === tab).filters, ...chosen, page, page_size: PAGE_SIZE };
 
-  const filter = (patch) => {
-    if ('status' in patch) setStatus(patch.status);
-    if ('search' in patch) setSearch(patch.search);
-    setPage(1);
+  const { result, error, loading, reload } = useAsync(() => api.quotes.list(params), [api, tab, search, filters.source, filters.customer_type, filters.contacted, filters.validity, filters.from, filters.to, filters.assigned_to, page]);
+  const quotes = result?.data ?? [];
+  const counts = result?.counts ?? {};
+  const set = (key) => (e) => (setFilters((f) => ({ ...f, [key]: e.target.value })), setPage(1));
+  const filtered = Object.entries(filters).some(([, v]) => v);
+
+  const toggleContacted = async (q) => {
+    setActionError(null);
+    try {
+      await api.quotes.update(q.id, { contacted: !q.contacted });
+      reload();
+    } catch (err) {
+      setActionError(err);
+    }
   };
+
+  const select = 'rounded-lg border border-line bg-surface px-2.5 py-2 text-sm outline-none focus:border-primary';
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
-        <Chip active={!status} onClick={() => filter({ status: '' })}>
-          All
-        </Chip>
-        {STATUSES.map((s) => (
-          <Chip key={s} active={status === s} onClick={() => filter({ status: s })}>
-            {s[0].toUpperCase() + s.slice(1)}
-          </Chip>
-        ))}
-        <input
-          type="search"
-          placeholder="Search name or phone"
-          aria-label="Search quote requests"
-          value={search}
-          onChange={(e) => filter({ search: e.target.value })}
-          className="ml-auto w-full rounded-xl border border-line bg-surface px-3 py-2 text-sm outline-none focus:border-primary sm:w-64"
-        />
+        <div role="tablist" aria-label="Quotation views" className="-mb-px flex flex-1 gap-1 overflow-x-auto [scrollbar-width:none]">
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              role="tab"
+              aria-selected={tab === t.id}
+              onClick={() => (setTab(t.id), setPage(1))}
+              className={`whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${tab === t.id ? 'bg-primary text-white' : 'text-ink/70 hover:bg-surface hover:text-ink'}`}
+            >
+              {t.label}
+              {counts[t.id] !== undefined && <span className={`ml-1.5 rounded-full px-1.5 text-xs ${tab === t.id ? 'bg-white/20' : 'bg-surface-2'}`}>{counts[t.id]}</span>}
+            </button>
+          ))}
+        </div>
+        <Button size="sm" onClick={() => onNavigate('/admin/quotes/new')}>
+          + New quotation
+        </Button>
       </div>
 
-      <ErrorNote error={error} />
-      {!loading && !quotes.length && !error && <EmptyState title="No quote requests" message="Quotes customers send from the website will appear here." />}
+      <Card className="flex flex-wrap items-end gap-2 p-3">
+        <label className="min-w-56 flex-1">
+          <span className="mb-1 block text-[11px] font-medium text-muted">Search</span>
+          <input
+            type="search"
+            value={filters.search}
+            onChange={set('search')}
+            placeholder="Quotation ID, phone, name or company"
+            aria-label="Search quotations"
+            className={`${select} w-full`}
+          />
+        </label>
+        <Filter label="Contacted">
+          <select aria-label="Contacted" value={filters.contacted} onChange={set('contacted')} className={select}>
+            <option value="">Any</option>
+            <option value="true">Contacted</option>
+            <option value="false">Not contacted</option>
+          </select>
+        </Filter>
+        <Filter label="Validity">
+          <select aria-label="Validity" value={filters.validity} onChange={set('validity')} className={select}>
+            <option value="">Any</option>
+            <option value="valid">Valid</option>
+            <option value="expiring">Expiring in 3 days</option>
+            <option value="expired">Expired</option>
+          </select>
+        </Filter>
+        <Filter label="Source">
+          <select aria-label="Source" value={filters.source} onChange={set('source')} className={select}>
+            <option value="">Any</option>
+            {Object.entries(SOURCES).map(([id, label]) => (
+              <option key={id} value={id}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </Filter>
+        <Filter label="Customer">
+          <select aria-label="Customer type" value={filters.customer_type} onChange={set('customer_type')} className={select}>
+            <option value="">B2B + B2C</option>
+            <option value="B2B">Business (B2B)</option>
+            <option value="B2C">Retail (B2C)</option>
+          </select>
+        </Filter>
+        {staff.length > 0 && (
+          <Filter label="Salesperson">
+            <select aria-label="Salesperson" value={filters.assigned_to} onChange={set('assigned_to')} className={select}>
+              <option value="">Anyone</option>
+              {staff.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.full_name}
+                </option>
+              ))}
+            </select>
+          </Filter>
+        )}
+        <Filter label="From">
+          <input type="date" aria-label="From date" value={filters.from} max={filters.to || today()} onChange={set('from')} className={select} />
+        </Filter>
+        <Filter label="To">
+          <input type="date" aria-label="To date" value={filters.to} min={filters.from || undefined} max={today()} onChange={set('to')} className={select} />
+        </Filter>
+        {filtered && (
+          <Button variant="ghost" size="sm" onClick={() => (setFilters(EMPTY), setPage(1))}>
+            Clear
+          </Button>
+        )}
+      </Card>
 
-      <div className={`space-y-3 ${loading ? 'opacity-60' : ''}`}>
-        {quotes.map((q) => (
-          <QuoteCard key={q.id} quote={q} api={api} onSaved={reload} />
-        ))}
-      </div>
+      <ErrorNote error={error ?? actionError} />
+      {!loading && !quotes.length && !error && <EmptyState title="No quotations" message={filtered || tab !== 'all' ? 'Nothing matches these filters.' : 'Quotations customers send — and ones you create — appear here.'} />}
+
+      {quotes.length > 0 && (
+        <Card className={`overflow-x-auto ${loading ? 'opacity-60' : ''}`}>
+          <table className="w-full min-w-[64rem] text-sm">
+            <thead className="border-b border-line text-left text-xs text-muted">
+              <tr>
+                <th className="px-4 py-2 font-medium">Quotation ID</th>
+                <th className="px-4 py-2 font-medium">Date</th>
+                <th className="px-4 py-2 font-medium">Customer</th>
+                <th className="px-4 py-2 text-right font-medium">Total</th>
+                <th className="px-4 py-2 font-medium">Status</th>
+                <th className="px-4 py-2 font-medium">Contacted</th>
+                <th className="px-4 py-2 font-medium">Valid until</th>
+                <th className="px-4 py-2 font-medium">Follow-up</th>
+                <th className="px-4 py-2" />
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-line">
+              {quotes.map((q) => {
+                const overdue = IN_PROGRESS.includes(q.status) && q.follow_up_on && q.follow_up_on <= today();
+                return (
+                  <tr key={q.id} className="hover:bg-surface-2/50">
+                    <td className="px-4 py-2.5">
+                      <button onClick={() => onNavigate(`/admin/quotes/${q.id}`)} className="font-mono text-xs font-semibold text-primary hover:underline">
+                        {q.quote_number}
+                      </button>
+                      <span className="block text-[11px] text-muted">
+                        {SOURCES[q.source] ?? q.source}
+                        {q.version_count > 1 && ` · ${q.version_count} versions`}
+                        {q.assigned_name && ` · ${q.assigned_name}`}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-muted">{shortDate(q.created_at)}</td>
+                    <td className="px-4 py-2.5">
+                      <span className="block font-medium">
+                        {q.customer_name}
+                        {q.customer_type === 'B2B' && <Badge className="ml-1.5">B2B</Badge>}
+                      </span>
+                      <span className="block text-xs text-muted">
+                        +91 {q.customer_phone}
+                        {q.company_name && ` · ${q.company_name}`}
+                      </span>
+                    </td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold">
+                      {formatCurrency(q.total ?? 0)}
+                      <span className="block text-[11px] font-normal text-muted">{(q.items ?? []).length} items</span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <Badge tone={statusOf(q).tone}>{statusOf(q).label}</Badge>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <button
+                        role="switch"
+                        aria-checked={q.contacted}
+                        onClick={() => toggleContacted(q)}
+                        aria-label={`${q.quote_number}: ${q.contacted ? 'contacted' : 'not contacted'}`}
+                        className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${q.contacted ? 'bg-emerald-600/10 text-emerald-700' : 'bg-amber-500/15 text-amber-800'}`}
+                      >
+                        <span className={`h-2 w-2 rounded-full ${q.contacted ? 'bg-emerald-600' : 'bg-amber-500'}`} />
+                        {q.contacted ? 'Contacted' : 'Not contacted'}
+                      </button>
+                    </td>
+                    <td className={`whitespace-nowrap px-4 py-2.5 ${q.expired ? 'text-primary' : 'text-muted'}`}>{shortDate(q.valid_until)}</td>
+                    <td className={`whitespace-nowrap px-4 py-2.5 ${overdue ? 'font-semibold text-primary' : 'text-muted'}`}>{q.follow_up_on ? shortDate(q.follow_up_on) : '—'}</td>
+                    <td className="px-4 py-2.5 text-right">
+                      <Button variant="ghost" size="sm" onClick={() => onNavigate(`/admin/quotes/${q.id}`)}>
+                        Open
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </Card>
+      )}
 
       <Pager page={page} totalPages={result?.total_pages ?? 1} onChange={setPage} />
     </div>
   );
 }
 
-function QuoteCard({ quote, api, onSaved }) {
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState({ status: quote.status, notes: quote.notes ?? '' });
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState(null);
-  const changed = draft.status !== quote.status || draft.notes !== (quote.notes ?? '');
-  const items = quote.items ?? [];
-
-  const save = async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await api.quotes.update(quote.id, draft);
-      onSaved();
-    } catch (err) {
-      setError(err);
-    } finally {
-      setSaving(false);
-    }
-  };
-
+function Filter({ label, children }) {
   return (
-    <Card className="p-4">
-      <button onClick={() => setOpen((o) => !o)} aria-expanded={open} className="flex w-full flex-wrap items-center gap-x-4 gap-y-1 text-left">
-        <span className="font-semibold">{quote.customer_name}</span>
-        <a href={`tel:${quote.customer_phone}`} onClick={(e) => e.stopPropagation()} className="text-sm text-primary hover:underline">
-          +91 {quote.customer_phone}
-        </a>
-        {quote.customer_city && <span className="text-sm text-muted">{quote.customer_city}</span>}
-        <span className="ml-auto flex items-center gap-3">
-          <Badge tone={STATUS_TONE[quote.status]}>{quote.status}</Badge>
-          <span className="font-semibold">{formatCurrency(quote.total ?? 0)}</span>
-        </span>
-        <span className="w-full text-xs text-muted">
-          {quote.quote_number} · {formatDateTime(quote.created_at)} · {items.length} item{items.length === 1 ? '' : 's'}
-          {quote.sent_via && ` · via ${quote.sent_via}`}
-        </span>
-      </button>
-
-      {open && (
-        <div className="mt-4 space-y-4 border-t border-line pt-4">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[40rem] text-sm">
-              <thead className="text-left text-xs text-muted">
-                <tr>
-                  <th className="py-1 font-medium">Item code</th>
-                  <th className="py-1 font-medium">Product</th>
-                  <th className="py-1 font-medium">Brand</th>
-                  <th className="py-1 text-right font-medium">Qty</th>
-                  <th className="py-1 text-right font-medium">Rate</th>
-                  <th className="py-1 text-right font-medium">Amount</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-line">
-                {items.map((item, i) => (
-                  <tr key={i}>
-                    <td className="py-1.5 font-mono text-xs font-semibold">{item.dynamic_code ?? item.product_code ?? '—'}</td>
-                    <td className="py-1.5">{item.product_name}</td>
-                    <td className="py-1.5">{item.brand_name ?? '—'}</td>
-                    <td className="py-1.5 text-right">
-                      {item.quantity} {item.unit}
-                    </td>
-                    <td className="py-1.5 text-right">{item.unit_price == null ? 'Not available' : formatCurrency(item.unit_price)}</td>
-                    <td className="py-1.5 text-right">{item.amount == null ? '—' : formatCurrency(item.amount)}</td>
-                  </tr>
-                ))}
-              </tbody>
-              <tfoot className="text-right">
-                <tr>
-                  <td colSpan={5} className="pt-2 text-muted">Subtotal</td>
-                  <td className="pt-2">{formatCurrency(quote.subtotal ?? 0)}</td>
-                </tr>
-                <tr>
-                  <td colSpan={5} className="text-muted">GST</td>
-                  <td>{formatCurrency(quote.gst ?? 0)}</td>
-                </tr>
-                <tr className="font-semibold">
-                  <td colSpan={5}>Total</td>
-                  <td>{formatCurrency(quote.total ?? 0)}</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-[12rem_1fr]">
-            <SelectField
-              id={`status-${quote.id}`}
-              label="Status"
-              value={draft.status}
-              onChange={(e) => setDraft((d) => ({ ...d, status: e.target.value }))}
-              options={STATUSES.map((s) => ({ value: s, label: s[0].toUpperCase() + s.slice(1) }))}
-            />
-            <TextAreaField id={`notes-${quote.id}`} label="Notes" rows={2} value={draft.notes} onChange={(e) => setDraft((d) => ({ ...d, notes: e.target.value }))} />
-          </div>
-          <ErrorNote error={error} />
-          <div className="flex justify-end">
-            <Button size="sm" onClick={save} disabled={!changed || saving}>
-              {saving ? 'Saving…' : 'Save'}
-            </Button>
-          </div>
-        </div>
-      )}
-    </Card>
+    <label>
+      <span className="mb-1 block text-[11px] font-medium text-muted">{label}</span>
+      {children}
+    </label>
   );
 }

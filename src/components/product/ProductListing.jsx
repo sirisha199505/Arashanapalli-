@@ -5,6 +5,7 @@ import { navigate } from '../../hooks/useRoute';
 import { SORT_OPTIONS, categoryPath, getBrand, getCategories, getProductByCode, getStartingPrice, searchCatalog, shortBrandName } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { Button, Card, Icon } from '../ui';
+import AddProductsPanel from '../quote/AddProductsPanel';
 import NewArrivalsStrip from './NewArrivalsStrip';
 import ProductGrid from './ProductGrid';
 import Pagination from './Pagination';
@@ -49,7 +50,7 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
 
   const update = (patch) => navigate(basePath(category) + toQueryString({ ...filters, ...patch }));
 
-  const { results, categoryCounts, brandCounts } = useMemo(
+  const { results, brandCounts } = useMemo(
     () => searchCatalog(PRODUCTS, { search: filters.search, category, brandIds: filters.brandIds, sort: filters.sort }),
     [filters.search, category, filters.brandIds.join(','), filters.sort], // eslint-disable-line react-hooks/exhaustive-deps
   );
@@ -82,69 +83,8 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
     image: category ? results.find((p) => p.image)?.image : undefined,
   });
 
-  const sidebar = (
-    <div className="space-y-6">
-      <FilterGroup title="Category">
-        <ul className="space-y-1 text-sm">
-          <li>
-            <a href={`/products${toQueryString({ ...filters, brandIds: [] })}`} className={linkClass(!category)}>
-              All products
-            </a>
-          </li>
-          {getCategories().map((c) => (
-            <li key={c}>
-              <a href={`${categoryPath(c)}${toQueryString({ ...filters, brandIds: [] })}`} className={linkClass(c === category)}>
-                <span className="truncate">{c}</span>
-                <span className="text-xs text-muted">{categoryCounts[c] ?? 0}</span>
-              </a>
-            </li>
-          ))}
-        </ul>
-      </FilterGroup>
-
-      {brandsHere.length > 0 && (
-        <FilterGroup title="Brand">
-          <ul className="space-y-1.5 text-sm">
-            {brandsHere.map((b) => (
-              <li key={b.id}>
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="h-4 w-4 accent-primary"
-                    checked={filters.brandIds.includes(b.id)}
-                    onChange={() =>
-                      update({ brandIds: filters.brandIds.includes(b.id) ? filters.brandIds.filter((id) => id !== b.id) : [...filters.brandIds, b.id] })
-                    }
-                  />
-                  <span className="flex-1 truncate">{shortBrandName(b)}</span>
-                  <span className="text-xs text-muted">{brandCounts[b.id]}</span>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </FilterGroup>
-      )}
-
-      <FilterGroup title="Starting price">
-        <ul className="space-y-1.5 text-sm">
-          {[{ id: '', label: 'Any price' }, ...PRICE_BANDS].map((b) => (
-            <li key={b.id || 'any'}>
-              <label className="flex cursor-pointer items-center gap-2">
-                <input type="radio" name="price" className="h-4 w-4 accent-primary" checked={filters.price === b.id} onChange={() => update({ price: b.id })} />
-                {b.label}
-              </label>
-            </li>
-          ))}
-        </ul>
-      </FilterGroup>
-
-      {activeCount > 0 && (
-        <Button variant="secondary" size="sm" className="w-full" onClick={() => update({ brandIds: [], price: '' })}>
-          Clear filters
-        </Button>
-      )}
-    </div>
-  );
+  // the left column is where customers choose products for their quote
+  const sidebar = <AddProductsPanel key={category ?? 'all'} category={category} />;
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-28 pt-[calc(var(--header-h)+1.25rem)] sm:pb-14">
@@ -182,19 +122,17 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
         </p>
       </div>
 
-      {codeMatch && <CodeMatch product={codeMatch} onQuote={onQuote} />}
 
-      {category && !filters.search && !activeCount && <NewArrivalsStrip category={category} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />}
-
-      <div className="grid gap-6 lg:grid-cols-[15rem_1fr]">
-        <aside className={`${filtersOpen ? 'block' : 'hidden'} lg:block`}>
-          <Card className="p-4 lg:sticky lg:top-24">{sidebar}</Card>
-        </aside>
+      <div className="grid gap-6 lg:grid-cols-[20rem_minmax(0,1fr)]">
+        {/* left: choose products for the quote (brand first, product first or packages) */}
+        <aside className={`${filtersOpen ? 'block' : 'hidden'} lg:block`}>{sidebar}</aside>
 
         <div className="min-w-0 space-y-4">
+          {codeMatch && <CodeMatch product={codeMatch} onQuote={onQuote} />}
+          {category && !filters.search && !activeCount && <NewArrivalsStrip category={category} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />}
           <div className="flex items-center justify-between gap-3">
             <Button variant="secondary" size="sm" className="lg:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-              Filters{activeCount ? ` (${activeCount})` : ''}
+              {filtersOpen ? 'Hide product selector' : 'Select products'}
             </Button>
             <label className="ml-auto flex items-center gap-2 text-sm text-muted">
               Sort by
@@ -211,7 +149,28 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
               </select>
             </label>
           </div>
-          <ProductGrid products={shown} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />
+          {activeCount > 0 && (
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              <span className="text-muted">Showing only:</span>
+              {filters.brandIds.map((id) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => update({ brandIds: filters.brandIds.filter((b) => b !== id) })}
+                  className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20"
+                >
+                  {getBrand(id) ? shortBrandName(getBrand(id)) : id} <Icon name="close" className="h-3 w-3" />
+                </button>
+              ))}
+              {band && (
+                <button type="button" onClick={() => update({ price: '' })} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary hover:bg-primary/20">
+                  {band.label} <Icon name="close" className="h-3 w-3" />
+                </button>
+              )}
+            </div>
+          )}
+          {/* three across: the product selector takes the left of the page */}
+          <ProductGrid className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" products={shown} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />
           <Pagination page={page} totalPages={totalPages} hrefFor={(n) => basePath(category) + toQueryString({ ...filters, page: n })} />
         </div>
       </div>
@@ -219,22 +178,12 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
   );
 }
 
-const linkClass = (active) =>
-  `flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 transition ${active ? 'bg-primary/10 font-semibold text-primary' : 'text-ink/80 hover:bg-surface-2 hover:text-ink'}`;
 
-function FilterGroup({ title, children }) {
-  return (
-    <section>
-      <h2 className="mb-2 text-xs font-semibold uppercase tracking-[0.12em] text-muted">{title}</h2>
-      {children}
-    </section>
-  );
-}
 
 /** Shown when the search is exactly a shelf code — the sales team's quick lookup. */
 function CodeMatch({ product, onQuote }) {
   return (
-    <Card className="mb-5 flex items-center gap-4 border-primary/40 bg-primary/5 p-4">
+    <Card className="flex items-center gap-4 border-primary/40 bg-primary/5 p-4">
       <ProductImage product={product} className="h-16 w-16 shrink-0 rounded-xl border border-line" padding="p-1" />
       <div className="min-w-0 flex-1">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">Product code {product.code}</p>

@@ -24,11 +24,16 @@ const unavailableToText = (lines) =>
     ? ['*Not available in the chosen brand — please suggest:*', ...lines.map((l) => `• ${l.product.name} (asked: ${l.brand.name}) — ${qtyText(l)}`), '']
     : [];
 
-export const quoteToText = ({ brands, sections, unavailable, totals }, customer) =>
+/** Where a customer can see a quotation again by its ID. */
+export const trackUrl = (quotationId) => `${window.location.origin}/track/${quotationId}`;
+
+/** `quotationId` is the saved quotation's ID (AT-2611-7K3P9); without it (offline) a dated reference is used. */
+export const quoteToText = ({ brands, sections, unavailable, totals }, customer, quotationId) =>
   [
     `*Quote Request – ${COMPANY.name}*`,
-    `Quote #: ${quoteNumber()}  |  Date: ${formatDate()}`,
+    `Quotation ID: ${quotationId ?? quoteNumber()}  |  Date: ${formatDate()}`,
     `Customer: ${customer.name.trim()} (${formatPhone(customer.phone)}), ${customer.city.trim()}`,
+    customer.company?.trim() && `Company: ${customer.company.trim()}${customer.gstin?.trim() ? `  |  GSTIN: ${customer.gstin.trim().toUpperCase()}` : ''}`,
     `${brands.length === 1 ? 'Brand' : 'Brands'}: ${brands.map((b) => b.name).join(', ')}`,
     '',
     ...sections.flatMap(sectionToText),
@@ -36,7 +41,11 @@ export const quoteToText = ({ brands, sections, unavailable, totals }, customer)
     `Subtotal: ${formatCurrency(totals.subtotal)}`,
     `GST: ${formatCurrency(totals.gst)}`,
     `Total: ${formatCurrency(totals.total)}`,
-  ].join('\n');
+    quotationId && '',
+    quotationId && `Track this quotation: ${trackUrl(quotationId)}`,
+  ]
+    .filter((line) => line !== false && line !== undefined && line !== null)
+    .join('\n');
 
 const digits = (phone) => phone.replace(/\D/g, '');
 
@@ -44,7 +53,29 @@ export const whatsAppUrl = (text) => `https://wa.me/${digits(COMPANY.phone)}?tex
 
 export const phoneUrl = () => `tel:${digits(COMPANY.phone)}`;
 
-export const buildWhatsAppLink = (quote, customer) => whatsAppUrl(quoteToText(quote, customer));
+export const buildWhatsAppLink = (quote, customer, quotationId) => whatsAppUrl(quoteToText(quote, customer, quotationId));
 
-export const buildMailtoLink = (quote, customer) =>
-  `mailto:${COMPANY.email}?subject=${encodeURIComponent(`Quote Request – ${customer.name}`)}&body=${encodeURIComponent(quoteToText(quote, customer).replaceAll('*', ''))}`;
+export const buildMailtoLink = (quote, customer, quotationId) =>
+  `mailto:${COMPANY.email}?subject=${encodeURIComponent(`Quote Request ${quotationId ?? ''} – ${customer.name}`)}&body=${encodeURIComponent(quoteToText(quote, customer, quotationId).replaceAll('*', ''))}`;
+
+/**
+ * Share a PDF on WhatsApp. On phones that can share files, the PDF itself goes (pick WhatsApp in the share sheet);
+ * otherwise WhatsApp opens with the message and a link to the PDF — to `phone` if given, else to a contact the user picks.
+ */
+export async function sharePdf({ url, filename, text, phone }) {
+  try {
+    if (navigator.canShare) {
+      const blob = await (await fetch(url)).blob();
+      const file = new File([blob], filename, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], text });
+        return 'shared';
+      }
+    }
+  } catch (err) {
+    if (err?.name === 'AbortError') return 'cancelled'; // closed the share sheet
+  }
+  const to = phone ? `91${digits(phone).slice(-10)}` : '';
+  window.open(`https://wa.me/${to}?text=${encodeURIComponent(`${text}\n${url}`)}`, '_blank', 'noopener');
+  return 'link';
+}

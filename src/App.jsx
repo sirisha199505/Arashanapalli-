@@ -22,7 +22,10 @@ import Reviews from './components/profile/Reviews';
 import QuotePage from './components/quote/QuotePage';
 import ComparePage from './components/compare/ComparePage';
 import QuoteComparePage from './components/compare/QuoteComparePage';
+import TrackQuotePage from './components/track/TrackQuotePage';
+import AccountPage from './components/account/AccountPage';
 import CompareBar from './components/compare/CompareBar';
+import QuoteBar from './components/quote/QuoteBar';
 import StoriesRow from './components/stories/StoriesRow';
 import StoryViewer from './components/stories/StoryViewer';
 import InstagramGallery from './components/stories/InstagramGallery';
@@ -88,16 +91,17 @@ export default function App() {
         addItem(id);
         setItemBrand(id, brandId);
       });
-    openQuote();
   };
 
   // no brand pop-up: the product goes straight into the quote; the brand is chosen on the quote page
-  // from a brand's page the product is added in that brand
+  // products are chosen while shopping (the quote bar then offers "Proceed"); from a brand's page in that brand
   const quoteFromShop = (product, brand) => {
     addItem(product.id);
     if (brand) setItemBrand(product.id, brand.id);
-    openQuote();
   };
+  // pages where customers pick products — they get the "N selected · Proceed to quote" bar
+  const shopping = ['/', '/products', '/new-arrivals', '/brands', '/compare'].includes(path) || /^\/(category|brand|product)\//.test(path);
+  const showQuoteBar = shopping && itemCount > 0;
 
   // product page: adds the chosen brand and quantity, staying on the page (it shows a "View quote" link)
   const addToQuote = (product, brandId, quantity) => {
@@ -158,6 +162,8 @@ export default function App() {
     ),
     '/products': <ProductListing query={getQuery()} onQuote={quoteFromShop} compareIds={compareIds} onToggleCompare={toggleCompare} />,
     '/brands': <BrandsPage />,
+    '/track': <TrackQuotePage />,
+    '/account': <AccountPage />,
     '/new-arrivals': <NewArrivalsPage onQuote={quoteFromShop} compareIds={compareIds} onToggleCompare={toggleCompare} />,
     '/applications': (
       <Page {...SECTIONS.applications} wide>
@@ -219,10 +225,15 @@ export default function App() {
     <>
       <Header path={path} quoteCount={itemCount} onOpenQuotes={openQuote} onGetQuote={openQuote} />
 
-      {PAGES[path] ?? categoryPage() ?? productPage() ?? brandPage() ?? <NotFound />}
+      {PAGES[path] ??
+        categoryPage() ??
+        productPage() ??
+        brandPage() ??
+        (path.startsWith('/track/') && <TrackQuotePage quotationId={decodeURIComponent(path.slice('/track/'.length)).toUpperCase()} />) ?? <NotFound />}
 
       <Footer />
-      {!path.startsWith('/compare') && <CompareBar count={compareIds.length} onCompare={openCompare} onClear={() => setCompareIds([])} />}
+      {!path.startsWith('/compare') && <CompareBar count={compareIds.length} onCompare={openCompare} onClear={() => setCompareIds([])} raised={showQuoteBar} />}
+      {showQuoteBar && <QuoteBar count={itemCount} onProceed={openQuote} />}
       <MobileNav path={path} quoteCount={itemCount} onOpenQuotes={openQuote} />
 
       {story && <StoryViewer groups={story.groups} start={story.start} onClose={closeStory} onSeen={markSeen} />}

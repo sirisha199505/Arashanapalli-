@@ -168,6 +168,9 @@ BRANDS.forEach((b) => (b.specs = { ...SAMPLE_TERMS[b.tier], ...b.specs }));
 /** Brand classes (the top level: class → brand → series), best first. */
 export const BRAND_TIERS = ['Premium', 'Standard', 'Economy'];
 
+/** Saved packages (e.g. "Modular kitchen hardware set") — only from the backend: [{ id, name, description, items: [{ productId, quantity, brandId? }] }]. */
+export const PACKAGES = [];
+
 /** Rows shown for each brand on the compare page, in this order. */
 export const BRAND_SPEC_FIELDS = [
   { key: 'material', label: 'Material' },

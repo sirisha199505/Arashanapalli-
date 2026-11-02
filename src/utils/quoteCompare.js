@@ -84,7 +84,8 @@ export const compareQuotations = (quotations) => {
   // overall balance (for "Recommended"): cheaper, better quality, longer warranty, fewer brands to deal with
   const spread = (v, lo, hi) => (hi > lo ? (v - lo) / (hi - lo) : 1);
   const balance = (r) =>
-    0.4 * (1 - spread(r.total, minTotal, maxTotal)) +
+    // price counts in proportion (₹3 dearer ≈ as good); the others relative to the best and worst on offer
+    0.4 * (r.total > 0 ? minTotal / r.total : 0) +
     0.25 * spread(r.quality, worstQuality, bestQuality) +
     0.2 * (r.warranty ? spread(r.warranty.avg, worstWarranty ?? 0, bestWarranty ?? 0) : 0) +
     0.15 * (r.brands.length <= 1 ? 1 : r.brands.length === 2 ? 0.6 : 0.3);

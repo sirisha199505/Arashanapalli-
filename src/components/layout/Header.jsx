@@ -40,6 +40,9 @@ export default function Header({ path, quoteCount, onOpenQuotes, onGetQuote }) {
         <HeaderSearch path={path} className="hidden flex-1 md:block" />
 
         <div className="ml-auto flex shrink-0 items-center gap-2 md:ml-0">
+          <a href="/account" aria-label="My quotations (sign in)" className="hidden h-10 w-10 place-items-center rounded-full text-ink/70 hover:bg-ink/5 hover:text-ink sm:grid">
+            <Icon name="users" />
+          </a>
           <button onClick={onOpenQuotes} aria-label={`My quotes (${quoteCount})`} className="relative hidden h-10 w-10 place-items-center rounded-full text-ink/70 hover:bg-ink/5 hover:text-ink sm:grid">
             <Icon name="file" />
             {quoteCount > 0 && (

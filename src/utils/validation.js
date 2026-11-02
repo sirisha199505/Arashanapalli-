@@ -14,7 +14,7 @@ export const normalizePhone = (phone) => {
 export const formatPhone = (phone) => `+91 ${normalizePhone(phone).replace(/(\d{5})(\d{5})/, '$1 $2')}`;
 
 /** { field: message } for every invalid field — an empty object means the details are valid. */
-export const validateCustomer = ({ name, phone, city }) => {
+export const validateCustomer = ({ name, phone, city, ...rest }) => {
   const errors = {};
   const n = name.trim();
   const p = phone.trim();
@@ -28,6 +28,12 @@ export const validateCustomer = ({ name, phone, city }) => {
 
   if (!c) errors.city = 'Please enter your city.';
   else if (c.length < 2 || !NAME_RE.test(c)) errors.city = 'Enter a valid city name.';
+
+  const e = (rest.email ?? '').trim();
+  if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) errors.email = 'Enter a valid email, or leave it empty.';
+  const g = (rest.gstin ?? '').trim().toUpperCase();
+  if (g && !/^\d{2}[A-Z]{5}\d{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/.test(g)) errors.gstin = 'GSTIN should look like 36ABCDE1234F1Z5.';
+  if (g && !(rest.company ?? '').trim()) errors.company = 'Add the company name for a GST quotation.';
 
   return errors;
 };

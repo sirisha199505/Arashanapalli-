@@ -123,7 +123,7 @@ export default function AdminLayout({ sections, path, page, session, awaiting, o
               <Icon name="external" className="h-4 w-4" /> View Website
             </a>
             <button
-              onClick={() => onNavigate('/admin/quotes', { status: 'new' })}
+              onClick={() => onNavigate('/admin/quotes', { tab: 'not_contacted' })}
               aria-label={`${awaiting} quote requests awaiting a reply`}
               className="relative grid h-10 w-10 place-items-center rounded-full text-muted hover:bg-surface-2 hover:text-ink"
             >
@@ -138,7 +138,7 @@ export default function AdminLayout({ sections, path, page, session, awaiting, o
                 <span className="grid h-9 w-9 place-items-center rounded-full bg-primary text-sm font-bold text-white">{initials(session.name)}</span>
                 <span className="hidden text-left leading-tight md:block">
                   <span className="block max-w-40 truncate text-sm font-semibold">{session.name || session.email}</span>
-                  <span className="block text-xs text-muted">Admin</span>
+                  <span className="block text-xs text-muted">{session.roleName ?? 'Admin'}</span>
                 </span>
                 <Icon name="chevronDown" className="hidden h-4 w-4 text-muted md:block" />
               </button>

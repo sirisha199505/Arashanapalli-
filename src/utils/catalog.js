@@ -76,7 +76,19 @@ export const shortBrandName = (brand) => brand.name.split(' (')[0];
 
 export const getBrandsForProduct = (product) => product.brandIds.map(getBrand);
 
-export const getUnitPrice = (product, brand) => Math.round(product.basePrice * brand.priceFactor);
+/** What the shop has set for one brand's version of a product (price, stock, image, description) — {} when nothing. */
+export const getBrandDetails = (product, brand) => product.brandDetails?.[brand.id] ?? {};
+
+/** The brand's own price if the shop set one, else base price × brand factor (the backend uses the same rule). */
+export const getUnitPrice = (product, brand) => getBrandDetails(product, brand).price ?? Math.round(product.basePrice * brand.priceFactor);
+
+/** Stock as shown to customers and staff; no entry = not tracked, nothing shown. */
+export const STOCK = {
+  in_stock: { label: 'In stock', tone: 'success' },
+  low_stock: { label: 'Few left', tone: 'primary' },
+  out_of_stock: { label: 'Out of stock', tone: 'neutral' },
+  on_order: { label: 'On order', tone: 'neutral' },
+};
 
 /** Lowest price across the brands a product is available in. */
 export const getStartingPrice = (product) => Math.min(...getBrandsForProduct(product).map((b) => getUnitPrice(product, b)));

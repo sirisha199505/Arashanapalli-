@@ -1,22 +1,26 @@
 import { useState } from 'react';
 import { Button, Card, EmptyState, Icon } from '../ui';
-import CustomerForm, { CUSTOMER_FIELDS } from './CustomerForm';
+import CustomerForm, { CUSTOMER_FIELDS, EXTRA_FIELDS } from './CustomerForm';
 import QuoteLineRow from './QuoteLineRow';
 import TotalsSummary from './TotalsSummary';
 import { submitQuote } from '../../utils/api';
 import { getCategoryIcon } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { buildMailtoLink, buildWhatsAppLink } from '../../utils/share';
+import { navigate } from '../../hooks/useRoute';
 import { validateCustomer } from '../../utils/validation';
 
-const EMPTY_CUSTOMER = { name: '', phone: '', city: '' };
-const ALL_SHOWN = Object.fromEntries(CUSTOMER_FIELDS.map((f) => [f.name, true]));
+const EMPTY_CUSTOMER = { name: '', phone: '', city: '', email: '', company: '', gstin: '' };
+const FIELDS = [...CUSTOMER_FIELDS, ...EXTRA_FIELDS];
+const ALL_SHOWN = Object.fromEntries(FIELDS.map((f) => [f.name, true]));
 
 /** Step 2: review the chosen items, enter + validate name / mobile / city, then send. */
 export default function QuoteDetails({ quote, onEdit, onSetItemBrand, onSetQuantity, onRemove }) {
   const [customer, setCustomer] = useState(EMPTY_CUSTOMER);
   const [shown, setShown] = useState({});
-  const [sentVia, setSentVia] = useState(null);
+  const [sent, setSent] = useState(null); // { via, id } — id is null if the quotation couldn't be saved
+  const [sending, setSending] = useState(false);
+  const sentVia = sent?.via;
   const errors = validateCustomer(customer);
   const isValid = Object.keys(errors).length === 0;
 
@@ -34,18 +38,32 @@ export default function QuoteDetails({ quote, onEdit, onSetItemBrand, onSetQuant
     );
   }
 
-  const send = (via) => {
+  // Save the quotation first so the message carries its Quotation ID; if saving fails the message still goes, with a dated reference.
+  const send = async (via) => {
     if (!isValid) {
       setShown(ALL_SHOWN);
-      const first = CUSTOMER_FIELDS.find((f) => errors[f.name]);
+      const first = FIELDS.find((f) => errors[f.name]);
       document.getElementById(`customer-${first.name}`)?.focus();
       return;
     }
-    // keep a copy for the shop; the WhatsApp / email hand-off doesn't wait on it or fail because of it
-    submitQuote(quote, customer, via).catch((err) => console.warn('Could not save quote request.', err));
-    if (via === 'whatsapp') window.open(buildWhatsAppLink(quote, customer), '_blank', 'noopener');
-    else window.location.href = buildMailtoLink(quote, customer);
-    setSentVia(via);
+    if (sending) return;
+    setSending(true);
+    // open WhatsApp's tab now, while still inside the click, so phone pop-up blockers allow it; it's pointed at the message below
+    const tab = via === 'whatsapp' ? window.open('', '_blank') : null;
+    let id = null;
+    try {
+      id = (await submitQuote(quote, customer, via)).data.quote_number;
+    } catch (err) {
+      console.warn('Could not save the quotation.', err);
+    }
+    const url = via === 'whatsapp' ? buildWhatsAppLink(quote, customer, id) : buildMailtoLink(quote, customer, id);
+    if (tab) {
+      tab.opener = null;
+      tab.location.href = url;
+    } else if (via === 'whatsapp') window.open(url, '_blank', 'noopener');
+    else window.location.href = url;
+    setSent({ via, id });
+    setSending(false);
   };
 
   return (
@@ -117,18 +135,29 @@ export default function QuoteDetails({ quote, onEdit, onSetItemBrand, onSetQuant
         <p className="mb-3 text-sm text-ink/70">{brandNames}</p>
         <TotalsSummary totals={quote.totals} />
         <div className="mt-4 grid gap-2">
-          <Button variant="whatsapp" onClick={() => send('whatsapp')}>
+          <Button variant="whatsapp" onClick={() => send('whatsapp')} disabled={sending}>
             <Icon name="chat" className="h-4 w-4" /> Send on WhatsApp
           </Button>
-          <Button variant="secondary" onClick={() => send('email')}>
+          <Button variant="secondary" onClick={() => send('email')} disabled={sending}>
             Email Quote
           </Button>
         </div>
         {sentVia ? (
-          <p className="mt-3 flex items-start gap-2 rounded-lg bg-emerald-600/10 p-2 text-xs text-emerald-700">
-            <Icon name="check" className="h-4 w-4 shrink-0" />
-            {sentVia === 'whatsapp' ? 'WhatsApp opened with your quote — press send there to finish.' : 'Your email app opened with the quote — press send there to finish.'}
-          </p>
+          <div role="status" className="mt-3 space-y-2 rounded-lg bg-emerald-600/10 p-3 text-xs text-emerald-800">
+            <p className="flex items-start gap-2">
+              <Icon name="check" className="h-4 w-4 shrink-0" />
+              {sentVia === 'whatsapp' ? 'WhatsApp opened with your quote — press send there to finish.' : 'Your email app opened with the quote — press send there to finish.'}
+            </p>
+            {sent.id && (
+              <div className="rounded-md bg-surface p-2.5 text-ink">
+                <p className="text-[11px] text-muted">Your Quotation ID — keep it to see this quote again</p>
+                <p className="font-mono text-base font-bold tracking-wide">{sent.id}</p>
+                <button type="button" onClick={() => navigate(`/track/${sent.id}`)} className="mt-1 text-sm font-semibold text-primary hover:underline">
+                  View / track this quotation →
+                </button>
+              </div>
+            )}
+          </div>
         ) : (
           !isValid && Object.keys(shown).length > 0 && (
             <p className="mt-3 text-xs font-medium text-primary">Please correct the highlighted details above.</p>

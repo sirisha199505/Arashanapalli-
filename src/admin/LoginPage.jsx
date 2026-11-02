@@ -5,7 +5,7 @@ import { postImage } from '../utils/stories';
 import { login } from './adminApi';
 import { ErrorNote } from './fields';
 
-const ADMIN_ROLE = 1;
+const STAFF_ROLES = [1, 2, 3]; // Admin, Sales, Limited sales
 
 // store photo behind the sign-in card, darkened and tinted brand red so the card stays readable
 const BACKDROP = {
@@ -25,8 +25,8 @@ export default function LoginPage({ onLogin }) {
     setError(null);
     try {
       const { token, info } = await login(form.email, form.password);
-      if (info.role !== ADMIN_ROLE) throw new Error('This account is not an admin.');
-      onLogin({ token, name: info.full_name, email: info.email });
+      if (!STAFF_ROLES.includes(info.role)) throw new Error('This account has no access to the admin.');
+      onLogin({ token, id: info.id, name: info.full_name, email: info.email, role: info.role, roleName: info.role_name });
     } catch (err) {
       setError(err);
       setBusy(false);
@@ -43,7 +43,7 @@ export default function LoginPage({ onLogin }) {
             <Logo className="h-11 w-11" />
             <div>
               <h1 className="font-display text-xl font-semibold">{COMPANY.name}</h1>
-              <p className="text-sm text-muted">Admin sign in</p>
+              <p className="text-sm text-muted">Staff sign in</p>
             </div>
           </div>
           <form onSubmit={submit} className="space-y-4">

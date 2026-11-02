@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { BRAND_SPEC_FIELDS, PRODUCTS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { getQuery } from '../../hooks/useRoute';
-import { brandPath, categoryPath, dynamicCode, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice } from '../../utils/catalog';
+import { STOCK, brandPath, categoryPath, dynamicCode, getBrandDetails, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { whatsAppUrl } from '../../utils/share';
 import { Badge, Button, Card, Icon, QuantityInput } from '../ui';
@@ -33,6 +33,9 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
   const [added, setAdded] = useState(null); // { brand, quantity } once added
   const brand = brands.find((b) => b.id === brandId) ?? brands[0];
   const compared = compareIds.includes(product.id);
+  // the chosen brand's own photo / description / stock, where the shop has set them
+  const details = getBrandDetails(product, brand);
+  const stock = STOCK[details.stock];
 
   usePageMeta({
     title: `${product.name}${product.code ? ` (${product.code})` : ''}`,
@@ -65,7 +68,7 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_20rem] lg:items-start">
         <Card className="relative overflow-hidden lg:sticky lg:top-[calc(var(--header-h)+1rem)]">
-          <ProductImage product={product} className="aspect-square" padding="p-8" />
+          <ProductImage key={details.image ?? product.image} product={details.image ? { ...product, image: details.image } : product} className="aspect-square" padding="p-8" />
           {product.newArrival && (
             <Badge tone="solidPrimary" className="absolute left-3 top-3">
               New arrival
@@ -130,7 +133,10 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
                     </td>
                     <td className="whitespace-nowrap px-4 py-2.5 font-mono text-xs font-semibold">{dynamicCode(product, b)}</td>
                     <td className="whitespace-nowrap px-4 py-2.5 text-muted">{b.specs?.warranty ?? '—'}</td>
-                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold">{formatCurrency(getUnitPrice(product, b))}</td>
+                    <td className="whitespace-nowrap px-4 py-2.5 text-right font-semibold">
+                      {formatCurrency(getUnitPrice(product, b))}
+                      {STOCK[getBrandDetails(product, b).stock] && <span className="block text-[11px] font-medium text-muted">{STOCK[getBrandDetails(product, b).stock].label}</span>}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -151,6 +157,12 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
             </a>{' '}
             · item code <span className="font-mono font-semibold text-ink">{dynamicCode(product, brand)}</span>
           </p>
+          {stock && (
+            <Badge tone={stock.tone} className="mt-2">
+              {stock.label}
+            </Badge>
+          )}
+          {details.description && <p className="mt-2 text-sm text-ink/80">{details.description}</p>}
 
           <label className="mt-4 block text-xs font-medium text-muted" htmlFor="order-brand">
             Brand

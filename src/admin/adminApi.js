@@ -55,8 +55,29 @@ export function createAdminApi(token, onUnauthorized) {
   return {
     dashboard: (period) => call(`/dashboard${query({ period })}`).then((res) => res.data),
     customers: { list: (params = {}) => call(`/customers${query(params)}`) },
-    quotes: resource('quotes'),
-    products: resource('products'),
+    quotes: {
+      ...resource('quotes'),
+      get: (id) => call(`/quotes/${id}`).then((res) => res.data),
+      // walk-in / phone quotation made by staff
+      createStaff: (data) => call('/quotes/staff', { method: 'POST', data }).then((res) => res.data),
+      // brand / quantity / price changes → a new version (AT-…-001)
+      revise: (id, data) => call(`/quotes/${id}/revise`, { method: 'POST', data }).then((res) => res.data),
+      // follow-up actions: call / whatsapp / visit / email / note, with the next follow-up date
+      logActivity: (id, data) => call(`/quotes/${id}/activities`, { method: 'POST', data }).then((res) => res.data),
+      // the customer accepted: quotation → order
+      convert: (id) => call(`/quotes/${id}/order`, { method: 'POST' }).then((res) => res.data),
+    },
+    staff: () => call('/staff').then((res) => res.data),
+    audit: (params = {}) => call(`/audit${query(params)}`),
+    users: resource('users'),
+    templates: resource('templates'),
+    orders: { ...resource('orders'), get: (id) => call(`/orders/${id}`).then((res) => res.data) },
+    products: {
+      ...resource('products'),
+      // bulk updates, a page at a time: brand_id → that brand's price / stock / photo / description
+      bulk: (params = {}) => call(`/products/bulk${query(params)}`),
+      saveBulk: (data) => call('/products/bulk', { method: 'PUT', data }).then((res) => res.data),
+    },
     brands: resource('brands'),
     categories: resource('categories'),
     series: resource('series'),

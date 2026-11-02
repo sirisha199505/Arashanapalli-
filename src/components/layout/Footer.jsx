@@ -7,7 +7,7 @@ import { Icon, Logo } from '../ui';
 
 const COLUMNS = [
   { title: 'Products', items: getCategories().slice(0, 6).map((label) => ({ label, href: categoryPath(label) })) },
-  { title: 'Quick Links', items: NAV_LINKS },
+  { title: 'Quick Links', items: [...NAV_LINKS, { href: '/track', label: 'Track your quotation' }, { href: '/account', label: 'My quotations' }] },
 ];
 
 const CONTACT = [

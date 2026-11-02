@@ -37,7 +37,7 @@ export default function CustomersPanel({ api, onNavigate }) {
                 <th className="px-4 py-2 font-medium">City</th>
                 <th className="px-4 py-2 text-right font-medium">Quotes</th>
                 <th className="px-4 py-2 text-right font-medium">Quoted value</th>
-                <th className="px-4 py-2 text-right font-medium">Won value</th>
+                <th className="px-4 py-2 text-right font-medium">Accepted value</th>
                 <th className="px-4 py-2 font-medium">Last quote</th>
                 <th className="px-4 py-2" />
               </tr>

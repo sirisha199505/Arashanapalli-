@@ -2,10 +2,8 @@ import { useState } from 'react';
 import { Icon } from '../ui';
 import QuoteCart from './QuoteCart';
 import QuoteDetails from './QuoteDetails';
-import BrandDropdown from './BrandDropdown';
 import { QUOTE_PAGE } from '../../data/content';
 import { formatDate } from '../../utils/format';
-import { quoteNumber } from '../../utils/quote';
 
 function Steps({ step }) {
   return (
@@ -37,22 +35,20 @@ export default function QuotePage({ quote, savedCount, onSaveQuotation, onBack, 
         <Icon name="arrow" className="h-4 w-4 rotate-180" /> {step ? 'Back to your quote' : 'Back to shop'}
       </button>
 
-      {/* title + steps on the left, brand choice top right */}
+      {/* title + steps (the brand for all items is chosen next to "Your items") */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div className="space-y-3">
           <div>
             <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{QUOTE_PAGE.title}</h1>
             <p className="mt-1 text-xs text-ink/70">
-              Quote #{quoteNumber()} · {formatDate()}
+              {formatDate()} · your Quotation ID is given when you send ·{' '}
+              <a href="/track" className="font-semibold text-primary hover:underline">
+                Track an earlier quotation
+              </a>
             </p>
           </div>
           <Steps step={step} />
         </div>
-        {step === 0 && (
-          <div className="w-full md:w-80">
-            <BrandDropdown options={quote.brandOptions} selectedId={quote.brand?.id} mixed={quote.brands.length > 1} onSelect={onSetBrand} />
-          </div>
-        )}
       </div>
 
       {step === 0 ? (
@@ -60,6 +56,7 @@ export default function QuotePage({ quote, savedCount, onSaveQuotation, onBack, 
           quote={quote}
           savedCount={savedCount}
           onSaveQuotation={onSaveQuotation}
+          onSetBrand={onSetBrand}
           onSetItemBrand={onSetItemBrand}
           onSetQuantity={onSetQuantity}
           onRemove={onRemove}
