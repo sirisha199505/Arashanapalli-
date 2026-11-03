@@ -78,6 +78,7 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
 
         <div className="min-w-0">
           <h1 className="font-display text-2xl font-semibold leading-tight md:text-3xl">{product.name}</h1>
+          {product.spec && <p className="mt-1 text-sm text-ink/80">{product.spec}</p>}
           <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted">
             {product.code && (
               <span>

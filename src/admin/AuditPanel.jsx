@@ -10,9 +10,12 @@ const TYPES = [
   { value: 'order', label: 'Orders' },
   { value: 'product', label: 'Products' },
   { value: 'brand', label: 'Brands' },
+  { value: 'category', label: 'Categories' },
   { value: 'user', label: 'Staff' },
 ];
-const ACTION = { created: 'Created', updated: 'Updated', bulk_updated: 'Bulk update', new_version: 'New version', follow_up: 'Follow-up', accepted: 'Accepted', hidden: 'Hidden' };
+// one entry's type, e.g. "Product", "Category"
+const SINGULAR = { quote: 'Quotation', order: 'Order', product: 'Product', brand: 'Brand', category: 'Category', user: 'Staff' };
+const ACTION = { created: 'Created', updated: 'Updated', bulk_updated: 'Bulk update', imported: 'Imported', new_version: 'New version', follow_up: 'Follow-up', accepted: 'Accepted', hidden: 'Hidden' };
 const label = (key) => key.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
 const show = (v) => (v === null || v === undefined || v === '' ? '—' : typeof v === 'boolean' ? (v ? 'yes' : 'no') : Array.isArray(v) ? v.join(', ') : String(v));
 
@@ -93,7 +96,7 @@ export default function AuditPanel({ api, initial = {} }) {
                   <td className="whitespace-nowrap px-4 py-2.5 text-muted">{new Date(a.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
                   <td className="px-4 py-2.5">{a.user_name}</td>
                   <td className="px-4 py-2.5">
-                    <Badge>{TYPES.find((t) => t.value === a.entity_type)?.label.replace(/s$/, '') ?? a.entity_type}</Badge>{' '}
+                    <Badge>{SINGULAR[a.entity_type] ?? a.entity_type}</Badge>{' '}
                     <span className="font-semibold">{ACTION[a.action] ?? a.action}</span>
                     <span className="block font-mono text-xs text-muted">{a.ref}</span>
                     {a.note && <span className="block text-xs text-ink/80">{a.note}</span>}

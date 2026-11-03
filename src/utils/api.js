@@ -8,12 +8,14 @@ const errorMessage = (data) =>
   typeof data === 'string' ? data : data && typeof data === 'object' ? Object.entries(data).map(([k, v]) => `${k.replaceAll('_', ' ')}: ${[v].flat().join(', ')}`).join('; ') : '';
 
 export async function api(path, { method = 'GET', data, token, timeout = 8000 } = {}) {
+  const body = data ? JSON.stringify({ data }) : undefined;
   const res = await fetch(`${BASE_URL}/api${path}`, {
     method,
     headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }) },
-    body: data ? JSON.stringify({ data }) : undefined,
+    body,
     signal: AbortSignal.timeout(timeout),
-    keepalive: method !== 'GET', // lets a quote save finish even if the page navigates to mailto:
+    // lets a quote save finish even if the page navigates to mailto: (browsers refuse keepalive bodies over 64 KB, e.g. uploads)
+    keepalive: method !== 'GET' && (body?.length ?? 0) < 60000,
   });
   const json = await res.json().catch(() => ({}));
   if (!res.ok || json.status === 'error') {

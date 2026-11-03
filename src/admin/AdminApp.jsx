@@ -16,6 +16,7 @@ import PackagesPanel from './PackagesPanel';
 import OrdersPanel from './OrdersPanel';
 import AuditPanel from './AuditPanel';
 import BulkUpdatePanel from './BulkUpdatePanel';
+import ImportPanel from './ImportPanel';
 import useAsync from './useAsync';
 
 // Sidebar sections; each item is a page at its own /admin/… URL
@@ -39,6 +40,7 @@ const SECTIONS = [
       { path: '/admin/brands', label: 'Brands', icon: 'tag', Panel: BrandsPanel, subtitle: 'Brand price factors and the specs shown on the compare page.' },
       { path: '/admin/products', label: 'Products', icon: 'box', Panel: ProductsPanel, subtitle: 'Everything listed on the website, with prices and brands.' },
       { path: '/admin/bulk', label: 'Bulk update', icon: 'layers', Panel: BulkUpdatePanel, subtitle: "Update many products at once, a page at a time — a brand's prices, stock, photos and descriptions, or product details. Every change goes into the audit log." },
+      { path: '/admin/import', label: 'Import products', icon: 'file', Panel: ImportPanel, subtitle: "Load the client's filled-in product Excel — check it first, then import it all at once." },
     ],
     adminOnly: true,
   },

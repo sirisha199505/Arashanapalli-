@@ -40,7 +40,7 @@ const query = (params) => {
 /** CRUD calls for each admin resource. `onUnauthorized` runs when the session is no longer accepted. */
 export function createAdminApi(token, onUnauthorized) {
   const call = (path, options = {}) =>
-    api(path, { ...options, token, timeout: 20000 }).catch((err) => {
+    api(path, { ...options, token, timeout: options.timeout ?? 20000 }).catch((err) => {
       if (err.status === 401 || err.status === 403) onUnauthorized();
       throw err;
     });
@@ -77,6 +77,9 @@ export function createAdminApi(token, onUnauthorized) {
       // bulk updates, a page at a time: brand_id → that brand's price / stock / photo / description
       bulk: (params = {}) => call(`/products/bulk${query(params)}`),
       saveBulk: (data) => call('/products/bulk', { method: 'PUT', data }).then((res) => res.data),
+      // the client's product Excel ({ file: base64, hide_missing }): check what would change, then import it
+      checkImport: (data) => call('/products/import/check', { method: 'POST', data, timeout: 180000 }).then((res) => res.data),
+      runImport: (data) => call('/products/import', { method: 'POST', data, timeout: 300000 }).then((res) => res.data),
     },
     brands: resource('brands'),
     categories: resource('categories'),

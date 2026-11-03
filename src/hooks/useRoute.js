@@ -37,10 +37,10 @@ export const navigate = (to, { replace = false } = {}) => {
 /** Back to the previous page of the site, or home when the visitor arrived on this page directly. */
 export const goBack = () => (window.history.state?.inApp ? window.history.back() : navigate('/'));
 
-// plain <a href="/about"> links switch page without a full reload; new-tab clicks and external links are left alone
+// plain <a href="/about"> links switch page without a full reload; new-tab clicks, downloads and external links are left alone
 const onLinkClick = (e) => {
   const link = e.target.closest?.('a[href^="/"]');
-  if (!link || link.target || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+  if (!link || link.target || link.hasAttribute('download') || e.defaultPrevented || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
   e.preventDefault();
   navigate(link.getAttribute('href'));
 };

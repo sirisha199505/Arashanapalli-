@@ -15,6 +15,7 @@ export default function AccountPage() {
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [step, setStep] = useState('email'); // email → code
+  const [emailed, setEmailed] = useState(true); // false: no email set up (developer's computer) — the code is in the backend terminal
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [quotes, setQuotes] = useState(null);
@@ -48,7 +49,8 @@ export default function AccountPage() {
   const sendCode = (e) => {
     e.preventDefault();
     run(async () => {
-      await requestSignInCode(email.trim());
+      const sent = await requestSignInCode(email.trim());
+      setEmailed(sent?.emailed !== false);
       setStep('code');
     });
   };
@@ -81,9 +83,16 @@ export default function AccountPage() {
             </form>
           ) : (
             <form onSubmit={verify} className="space-y-3">
-              <p className="text-sm text-muted">
-                We sent a code to <strong className="text-ink">{email}</strong>. It works for 10 minutes.
-              </p>
+              {emailed ? (
+                <p className="text-sm text-muted">
+                  We sent a code to <strong className="text-ink">{email}</strong>. It works for 10 minutes.
+                </p>
+              ) : (
+                <p className="rounded-lg bg-surface-2 px-3 py-2 text-sm text-muted">
+                  <strong className="text-ink">Test mode — no email was sent.</strong> Email isn't set up on this computer, so the 6-digit code is printed in
+                  the terminal where the backend runs (“sign-in code for {email}”). It works for 10 minutes.
+                </p>
+              )}
               <TextField id="acc-code" label="6-digit code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))} />
               <Button type="submit" className="w-full" disabled={busy || code.length !== 6}>
                 {busy ? 'Checking…' : 'Sign in'}
