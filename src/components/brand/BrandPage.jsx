@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { BRAND_SPEC_FIELDS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { navigate } from '../../hooks/useRoute';
-import { SORT_OPTIONS, categoryPath, getBrandProducts, getCategories, getUnitPrice, slugify } from '../../utils/catalog';
+import { SORT_OPTIONS, categoryPath, getBrandProducts, getCategories, getUnitPrice, groupByType, slugify } from '../../utils/catalog';
 import Pagination from '../product/Pagination';
 import ProductGrid from '../product/ProductGrid';
 import { Badge, Card, Chip, Icon } from '../ui';
@@ -33,8 +33,9 @@ export default function BrandPage({ brand, query, onQuote, compareIds, onToggleC
   const categories = getCategories().filter((c) => all.some((p) => p.category === c));
   const category = categories.find((c) => slugify(c) === categorySlug);
   const filtered = category ? inSeries.filter((p) => p.category === category) : inSeries;
-  const products = SORTERS[sort] ? [...filtered].sort(SORTERS[sort](brand)) : filtered;
-  const seriesCount = (id) => all.filter((p) => (p.seriesIds ?? []).includes(id)).length;
+  // one card per product type, as on the products page
+  const products = groupByType(SORTERS[sort] ? [...filtered].sort(SORTERS[sort](brand)) : filtered);
+  const seriesCount = (id) => groupByType(all.filter((p) => (p.seriesIds ?? []).includes(id))).length;
 
   const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
@@ -123,10 +124,10 @@ export default function BrandPage({ brand, query, onQuote, compareIds, onToggleC
           onChange={(e) => navigate(href({ category: e.target.value }))}
           className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary"
         >
-          <option value="">All categories ({inSeries.length})</option>
+          <option value="">All categories ({groupByType(inSeries).length})</option>
           {categories.map((c) => (
             <option key={c} value={slugify(c)}>
-              {c} ({inSeries.filter((p) => p.category === c).length})
+              {c} ({groupByType(inSeries.filter((p) => p.category === c)).length})
             </option>
           ))}
         </select>

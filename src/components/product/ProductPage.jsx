@@ -2,23 +2,24 @@ import { useState } from 'react';
 import { BRAND_SPEC_FIELDS, PRODUCTS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { getQuery } from '../../hooks/useRoute';
-import { STOCK, brandPath, categoryPath, dynamicCode, getBrandDetails, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice } from '../../utils/catalog';
+import { STOCK, brandPath, categoryPath, dynamicCode, getBrandDetails, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice, getVariants, groupByType } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { whatsAppUrl } from '../../utils/share';
 import { Badge, Button, Card, Icon, QuantityInput } from '../ui';
 import ProductCard, { PRODUCT_GRID } from './ProductCard';
 import ProductImage from './ProductImage';
+import VariantPicker from './VariantPicker';
 
 const MORE_COUNT = 8;
 const WARRANTY = BRAND_SPEC_FIELDS.find((f) => f.key === 'warranty');
 
-// other products in the same category, nearest in the catalog first
+// other products in the same category (one card per product type, not its own sizes / shades), nearest in the catalog first
 const relatedTo = (product) => {
-  const siblings = PRODUCTS.filter((p) => p.category === product.category);
-  const at = siblings.indexOf(product);
+  const own = new Set(getVariants(product));
+  const siblings = groupByType(PRODUCTS.filter((p) => p.category === product.category && !own.has(p)));
+  const at = PRODUCTS.indexOf(product);
   return siblings
-    .map((p, i) => ({ p, distance: Math.abs(i - at) }))
-    .filter(({ p }) => p !== product)
+    .map((p) => ({ p, distance: Math.abs(PRODUCTS.indexOf(p) - at) }))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, MORE_COUNT)
     .map(({ p }) => p);
@@ -100,6 +101,8 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
             <span className="text-base font-medium text-muted"> / {product.unit}</span>
           </p>
           <p className="mt-1 text-xs text-muted">Prices before GST · the final rate is confirmed with your quote</p>
+
+          <VariantPicker product={product} brandId={brand?.id} />
 
           {product.description && <p className="mt-4 leading-relaxed text-ink/90">{product.description}</p>}
 

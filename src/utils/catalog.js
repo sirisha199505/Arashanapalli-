@@ -103,9 +103,27 @@ export const getCategoryBySlug = (slug) => CATEGORY_BY_SLUG[slug];
 
 const NEW_ARRIVALS = PRODUCTS.filter((p) => p.newArrival);
 /** New arrivals, optionally only one category's, in catalog order. */
-export const getNewArrivals = (category) => (category ? NEW_ARRIVALS.filter((p) => p.category === category) : NEW_ARRIVALS);
+export const getNewArrivals = (category) => groupByType(category ? NEW_ARRIVALS.filter((p) => p.category === category) : NEW_ARRIVALS);
 /** Categories that have new arrivals, in category order. */
 export const getNewArrivalCategories = () => CATEGORY_LIST.filter((c) => NEW_ARRIVALS.some((p) => p.category === c));
+
+/**
+ * The category tree for the products page: [{ category, count, subcategories: [{ name, slug, count }] }] in category order,
+ * counted over `products` (e.g. the search results). Products with no subcategory sit directly under their category.
+ */
+export const getCategoryTree = (allProducts) => {
+  const products = groupByType(allProducts); // counted as the listing shows them: one per product type
+  const tree = new Map(getCategories().map((c) => [c, { category: c, count: 0, subs: new Map() }]));
+  products.forEach((p) => {
+    if (!tree.has(p.category)) tree.set(p.category, { category: p.category, count: 0, subs: new Map() });
+    const node = tree.get(p.category);
+    node.count += 1;
+    if (p.subcategory) node.subs.set(p.subcategory, (node.subs.get(p.subcategory) ?? 0) + 1);
+  });
+  return [...tree.values()]
+    .filter((n) => n.count)
+    .map(({ category, count, subs }) => ({ category, count, subcategories: [...subs].map(([name, n]) => ({ name, slug: slugify(name), count: n })) }));
+};
 
 export const getCategoryIcon = (category) => CATEGORY_ICONS[category] ?? 'box';
 
@@ -175,3 +193,50 @@ export const getStats = (now = new Date()) => [
 
 /** Pick company facts by key, in the order given. */
 export const getFacts = (...keys) => keys.map((key) => FACT_MAP[key]);
+
+// ---------- one product, many sizes / shades (the Amazon way) ----------
+// The catalog stores each size or shade as its own product, named "<type> – <variant>", e.g. "Suede Laminate 1 mm – Navy Blue".
+// Listings show one card per product type, and the product page lets the customer pick the variant.
+// A size at the end of the type ("… 0.8 mm", "… 12 mm") is a second choice, so 0.8 mm and 1 mm laminates are one product.
+const SIZE_IN_TYPE = /\s+(\d+(?:\.\d+)?\s*mm)$/i;
+
+/** The parts of a product's name: base ("Suede Laminate"), size from the type ("1 mm" or ''), variant ("Navy Blue" or ''). */
+export const nameParts = (product) => {
+  const [type, variant = ''] = product.name.split(' – ');
+  const size = type.match(SIZE_IN_TYPE)?.[1] ?? '';
+  return { base: size ? type.replace(SIZE_IN_TYPE, '') : type, size, variant };
+};
+const groupKey = (product) => `${product.category}|${nameParts(product).base}`;
+
+let GROUPS = null;
+let GROUPS_FOR = -1;
+const groups = () => {
+  // built on first use, after the live catalog has loaded (and rebuilt if the catalog changes size)
+  if (GROUPS_FOR !== PRODUCTS.length) {
+    GROUPS = new Map();
+    PRODUCTS.forEach((p) => {
+      const key = groupKey(p);
+      if (!GROUPS.has(key)) GROUPS.set(key, []);
+      GROUPS.get(key).push(p);
+    });
+    GROUPS_FOR = PRODUCTS.length;
+  }
+  return GROUPS;
+};
+
+/** Every size / shade of this product (itself included), in catalog order. */
+export const getVariants = (product) => groups().get(groupKey(product)) ?? [product];
+
+/** One product per type, keeping the list's order: the first match of each type stands for it. */
+export const groupByType = (products) => {
+  const seen = new Set();
+  return products.filter((p) => {
+    const key = groupKey(p);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+};
+
+/** Lowest price across every size / shade and brand. */
+export const getGroupStartingPrice = (product) => Math.min(...getVariants(product).map(startingPrice));

@@ -31,6 +31,8 @@ export const fetchCatalog = () => api('/catalog').then((res) => res.data);
 
 /** Branded PDF of a quotation, and of a comparison of 2–3 of them (same customer, same products). */
 export const quotationPdfUrl = (id) => `${BASE_URL || window.location.origin}/api/quotes/pdf/${encodeURIComponent(id)}`;
+/** "Scan to pay" UPI QR code (SVG) for a quotation's exact total. */
+export const upiQrUrl = (id) => `${BASE_URL || window.location.origin}/api/quotes/upi-qr/${encodeURIComponent(id)}`;
 export const comparisonPdfUrl = (ids) => `${BASE_URL || window.location.origin}/api/quotes/compare.pdf?numbers=${ids.map(encodeURIComponent).join(',')}`;
 /** Pros / cons of 2–3 quotations, worked out by the server from the prices actually quoted. */
 export const fetchQuotationComparison = (ids) => api(`/quotes/compare?numbers=${ids.map(encodeURIComponent).join(',')}`, { timeout: 20000 }).then((res) => res.data);

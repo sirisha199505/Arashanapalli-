@@ -8,6 +8,7 @@ const toForm = (p, categories) => ({
   code: p.code ?? '',
   name: p.name ?? '',
   category: p.category ?? categories[0]?.name ?? '',
+  subcategory: p.subcategory ?? '',
   unit: p.unit ?? 'piece',
   base_price: p.base_price ?? '',
   description: p.description ?? '',
@@ -44,7 +45,7 @@ export default function ProductForm({ product, categories, brands, api, onClose,
     e.preventDefault();
     setSaving(true);
     setError(null);
-    const data = { ...form, base_price: Number(form.base_price), position: Number(form.position) || 0, image: form.image.trim() || null };
+    const data = { ...form, base_price: Number(form.base_price), position: Number(form.position) || 0, image: form.image.trim() || null, subcategory: form.subcategory.trim() || null };
     try {
       await (isNew ? api.products.create(data) : api.products.update(product.id, data));
       onSaved();
@@ -87,6 +88,14 @@ export default function ProductForm({ product, categories, brands, api, onClose,
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <SelectField id="p-category" label="Category" value={form.category} onChange={set('category')} options={categories.map((c) => ({ value: c.name, label: c.name }))} />
+          <TextField
+            id="p-subcategory"
+            label="Sub-category (optional)"
+            placeholder="e.g. BWR Plywood"
+            hint="Groups products under the category on the website"
+            value={form.subcategory}
+            onChange={set('subcategory')}
+          />
           <SelectField id="p-unit" label="Sold per" value={form.unit} onChange={set('unit')} options={unitOptions.map((u) => ({ value: u, label: u }))} />
           <TextField id="p-price" label="Base price (₹, before brand factor)" type="number" min="1" step="1" required value={form.base_price} onChange={set('base_price')} />
           <TextField id="p-position" label="Sort order (lower shows first)" type="number" step="1" value={form.position} onChange={set('position')} />

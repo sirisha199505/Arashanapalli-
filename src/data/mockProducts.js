@@ -330,6 +330,7 @@ export const MOCK_PRODUCTS = TYPES.flatMap(([category, type, unit, price, varian
     id: slug(`${type} ${variant}`),
     name: `${type} – ${variant}`,
     category,
+    subcategory: type, // the product type groups its variants under the category
     image: null, // no photo yet — the UI shows the category icon instead
     description,
     unit,

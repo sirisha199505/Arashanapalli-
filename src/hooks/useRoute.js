@@ -23,15 +23,16 @@ export const getQuery = () => new URLSearchParams(window.location.search);
 /**
  * Opens another page at its own URL, so refresh, sharing and the back button all work.
  * `replace` updates the address in place (e.g. while typing a search) without adding a back-button step.
+ * `scroll: false` keeps the scroll position even on another page (e.g. picking another size of the same product).
  */
-export const navigate = (to, { replace = false } = {}) => {
+export const navigate = (to, { replace = false, scroll } = {}) => {
   if (to === currentLocation()) {
     if (!replace) window.scrollTo({ top: 0, behavior: 'smooth' });
     return;
   }
   const samePage = trimPath(to.split('?')[0]) === currentPath();
   window.history[replace ? 'replaceState' : 'pushState'](replace ? window.history.state : { inApp: true }, '', to);
-  window.dispatchEvent(new CustomEvent(ROUTE_EVENT, { detail: { scroll: !samePage } }));
+  window.dispatchEvent(new CustomEvent(ROUTE_EVENT, { detail: { scroll: scroll ?? !samePage } }));
 };
 
 /** Back to the previous page of the site, or home when the visitor arrived on this page directly. */

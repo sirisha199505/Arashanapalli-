@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { COMPANY } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { navigate } from '../../hooks/useRoute';
-import { quotationPdfUrl, trackQuotation } from '../../utils/api';
+import { quotationPdfUrl, trackQuotation, upiQrUrl } from '../../utils/api';
 import { formatCurrency, formatDate } from '../../utils/format';
 import { sharePdf, whatsAppUrl } from '../../utils/share';
 import { customerStatusOf } from '../../utils/quoteStatus';
@@ -158,6 +158,23 @@ export default function TrackQuotePage({ quotationId }) {
               <dd>{formatCurrency(quote.total)}</dd>
             </div>
           </dl>
+
+          {quote.payment && (
+            <div className="mt-5 flex flex-wrap items-center gap-4 rounded-xl border border-line p-4">
+              <img src={upiQrUrl(quote.quote_number)} alt={`UPI QR code to pay ${formatCurrency(quote.total)}`} width="128" height="128" className="h-32 w-32" />
+              <div className="min-w-0 text-sm">
+                <p className="font-bold">Scan to pay by UPI</p>
+                <p className="font-semibold text-primary">
+                  {formatCurrency(quote.total)} · Quotation {quote.quote_number}
+                </p>
+                <p className="mt-1">UPI ID: <span className="font-mono">{quote.payment.upi_id}</span></p>
+                <p className="mt-1 text-xs text-muted">GPay, PhonePe, Paytm or any UPI app — the amount and quotation ID fill in by themselves.</p>
+                <a href={quote.payment.link} className="mt-2 inline-block text-xs font-semibold text-primary hover:underline sm:hidden">
+                  Pay with a UPI app on this phone
+                </a>
+              </div>
+            </div>
+          )}
 
           {quote.versions.length > 1 && (
             <div className="mt-5 border-t border-line pt-4">
