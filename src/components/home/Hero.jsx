@@ -10,18 +10,18 @@ const SLIDE_MS = 7000;
 const delay = (i) => ({ animationDelay: `${100 + i * 110}ms` });
 
 /**
- * One slide. Phones: the media fills a banner above the copy (never behind it — the posts carry their own text).
- * Desktop: blurred cover fills the area and the full media sits contained (never cropped) in a rounded frame.
+ * One slide, always shown whole (never cropped — the posts carry their own text), over a blurred copy of itself.
+ * Phones: a banner above the copy. Desktop: the full media in a rounded frame.
  */
-function HeroMedia({ slide, active }) {
+function HeroMedia({ slide, active, playVideo }) {
   const media =
-    'absolute inset-0 h-full w-full object-cover lg:static lg:h-full lg:w-auto lg:max-w-full lg:rounded-2xl lg:object-contain lg:shadow-2xl lg:shadow-black/40 lg:ring-1 lg:ring-white/15';
+    'absolute inset-0 h-full w-full object-contain lg:static lg:h-full lg:w-auto lg:max-w-full lg:rounded-2xl lg:object-contain lg:shadow-2xl lg:shadow-black/40 lg:ring-1 lg:ring-white/15';
   return (
     <div className={`absolute inset-0 transition-opacity duration-[1200ms] ease-out ${active ? 'opacity-100' : 'opacity-0'}`} aria-hidden={!active}>
-      <img src={slide.image} alt="" className="absolute inset-0 hidden h-full w-full scale-110 object-cover blur-2xl brightness-75 lg:block" />
+      <img src={slide.image} alt="" className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl brightness-75" />
       <div className="absolute inset-0 lg:flex lg:items-center lg:justify-center lg:px-4 lg:pb-8 lg:pt-[calc(var(--header-h)+1.5rem)]">
         {/* only the visible reel loads its video; others show their cover */}
-        {slide.video && active ? (
+        {slide.video && active && playVideo ? (
           <video src={slide.video} poster={slide.image} autoPlay muted loop playsInline className={media} />
         ) : (
           <img src={slide.image} alt={slide.title} className={media} />
@@ -40,6 +40,20 @@ export default function Hero({ slides, onExplore, onRequestQuote }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const count = slides.slides.length;
+  // the reels are megabytes each: start them only once the page has finished loading (never with Data Saver on);
+  // until then each slide shows its cover photo
+  const [playVideo, setPlayVideo] = useState(false);
+  useEffect(() => {
+    if (navigator.connection?.saveData) return;
+    let timer;
+    const start = () => (timer = setTimeout(() => setPlayVideo(true), 1500));
+    if (document.readyState === 'complete') start();
+    else window.addEventListener('load', start, { once: true });
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('load', start);
+    };
+  }, []);
 
   useEffect(() => {
     if (paused) return;
@@ -51,15 +65,15 @@ export default function Hero({ slides, onExplore, onRequestQuote }) {
     <section id="top" className="relative isolate overflow-hidden bg-dark pt-[var(--header-h)] lg:h-svh lg:min-h-[40rem] lg:bg-bg lg:pt-0">
       {/* media: a banner on phones, the right 60% on desktop */}
       <div
-        className="relative aspect-[4/5] max-h-[46svh] w-full overflow-hidden lg:absolute lg:inset-0 lg:left-[40%] lg:aspect-auto lg:max-h-none lg:w-auto"
+        className="relative aspect-[4/5] max-h-[52svh] w-full overflow-hidden lg:absolute lg:inset-0 lg:left-[40%] lg:aspect-auto lg:max-h-none lg:w-auto"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
         {slides.slides.map((s, i) => (
-          <HeroMedia key={s.id} slide={s} active={i === index} />
+          <HeroMedia key={s.id} slide={s} active={i === index} playVideo={playVideo} />
         ))}
         {/* phones: a short fade into the dark copy area below · desktop: soft blend into the ivory copy side */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dark via-transparent via-20% to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dark/70 via-transparent via-[6%] to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
 
         {/* the category list that sat here on wide screens is off: it ran over the posts' own printed text */}
         <div className="hidden">

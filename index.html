@@ -11,7 +11,15 @@
     <title>Arashanapalli Traders – Hardware & Interior Products</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <!-- shown until the app starts (replaced by it), so a slow connection never sees a blank page -->
+      <div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; background: #f7f5f0; font-family: system-ui, sans-serif; color: #626262">
+        <img src="/logo.jpg" alt="" width="64" height="64" style="border-radius: 14px" />
+        <div style="font-size: 20px; font-weight: 600; color: #a82024; font-family: Georgia, serif">Arashanapalli Traders</div>
+        <div style="width: 26px; height: 26px; border: 3px solid #e5e2dc; border-top-color: #a82024; border-radius: 50%; animation: at-spin 0.8s linear infinite"></div>
+        <style>@keyframes at-spin { to { transform: rotate(360deg); } }</style>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

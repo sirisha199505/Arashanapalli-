@@ -10,7 +10,7 @@ if (window.location.pathname.startsWith('/admin')) {
   // the admin area is a separate bundle, loaded only here, and kept out of search engines
   document.title = 'Admin · Arashanapalli Traders';
   document.head.insertAdjacentHTML('beforeend', '<meta name="robots" content="noindex, nofollow">');
-  await loadCatalog(); // quotation editing uses the live products, brands and prices
+  await loadCatalog({ live: true }); // quotation editing uses the live products, brands and prices
   const { default: AdminApp } = await import('./admin/AdminApp');
   render(<AdminApp />);
 } else {

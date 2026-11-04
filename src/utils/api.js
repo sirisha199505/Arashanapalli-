@@ -27,7 +27,7 @@ export async function api(path, { method = 'GET', data, token, timeout = 8000 } 
   return json;
 }
 
-export const fetchCatalog = () => api('/catalog').then((res) => res.data);
+export const fetchCatalog = (options) => api('/catalog', options).then((res) => res.data);
 
 /** Branded PDF of a quotation, and of a comparison of 2–3 of them (same customer, same products). */
 export const quotationPdfUrl = (id) => `${BASE_URL || window.location.origin}/api/quotes/pdf/${encodeURIComponent(id)}`;
