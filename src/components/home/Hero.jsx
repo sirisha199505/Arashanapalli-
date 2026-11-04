@@ -10,7 +10,7 @@ const SLIDE_MS = 7000;
 const delay = (i) => ({ animationDelay: `${100 + i * 110}ms` });
 
 /**
- * One slide. Phones: the portrait media fills the screen behind the copy.
+ * One slide. Phones: the media fills a banner above the copy (never behind it — the posts carry their own text).
  * Desktop: blurred cover fills the area and the full media sits contained (never cropped) in a rounded frame.
  */
 function HeroMedia({ slide, active }) {
@@ -31,7 +31,11 @@ function HeroMedia({ slide, active }) {
   );
 }
 
-/** Full-bleed cinematic hero: media on the right fading into ivory, copy on the left. */
+/**
+ * Desktop: full-bleed cinematic hero, media on the right fading into ivory, copy on the left.
+ * Phones and tablets: the media as a banner on top and the copy below it on dark, so the posts' own printed text
+ * never runs into the heading.
+ */
 export default function Hero({ slides, onExplore, onRequestQuote }) {
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -44,20 +48,21 @@ export default function Hero({ slides, onExplore, onRequestQuote }) {
   });
 
   return (
-    <section id="top" className="relative isolate h-svh min-h-[38rem] overflow-hidden bg-dark lg:min-h-[40rem] lg:bg-bg">
-      {/* media: full screen on phones, the right 60% on desktop */}
+    <section id="top" className="relative isolate overflow-hidden bg-dark pt-[var(--header-h)] lg:h-svh lg:min-h-[40rem] lg:bg-bg lg:pt-0">
+      {/* media: a banner on phones, the right 60% on desktop */}
       <div
-        className="absolute inset-0 overflow-hidden lg:left-[40%]"
+        className="relative aspect-[4/5] max-h-[46svh] w-full overflow-hidden lg:absolute lg:inset-0 lg:left-[40%] lg:aspect-auto lg:max-h-none lg:w-auto"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
         {slides.slides.map((s, i) => (
           <HeroMedia key={s.id} slide={s} active={i === index} />
         ))}
-        {/* phones: dark fade under the copy · desktop: soft blend into the ivory copy side */}
-        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 via-45% to-black/10 lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
+        {/* phones: a short fade into the dark copy area below · desktop: soft blend into the ivory copy side */}
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-dark via-transparent via-20% to-transparent lg:bg-gradient-to-r lg:from-bg lg:via-bg/60 lg:via-12% lg:to-transparent lg:to-30%" />
 
-        <div className="absolute right-8 top-[calc(var(--header-h)+1.5rem)] hidden text-white xl:block">
+        {/* the category list that sat here on wide screens is off: it ran over the posts' own printed text */}
+        <div className="hidden">
           <p className="text-[11px] font-semibold uppercase leading-5 tracking-[0.3em]">
             {HERO_SIDE.title.map((t) => (
               <span key={t} className="block">
@@ -76,12 +81,12 @@ export default function Hero({ slides, onExplore, onRequestQuote }) {
       </div>
 
       {/* copy */}
-      <div className="relative z-10 mx-auto flex h-full max-w-7xl items-end px-4 pb-24 text-white sm:pb-14 lg:items-center lg:pb-0 lg:pt-16 lg:text-ink">
+      <div className="relative z-10 mx-auto flex max-w-7xl px-4 pb-10 pt-4 text-white sm:pb-14 lg:h-full lg:items-center lg:pb-0 lg:pt-16 lg:text-ink">
         <div className="max-w-xl">
           <p style={delay(0)} className="animate-fade-up text-xs font-semibold uppercase tracking-[0.3em] text-white/75 lg:text-muted">
             {HERO.eyebrow}
           </p>
-          <h1 style={delay(1)} className="animate-fade-up mt-4 text-[2.5rem] font-light leading-[0.98] tracking-tight sm:text-6xl lg:mt-5 xl:text-7xl">
+          <h1 style={delay(1)} className="animate-fade-up mt-3 text-[2.25rem] font-light leading-[0.98] tracking-tight sm:text-6xl lg:mt-5 xl:text-7xl">
             {HERO.lines.map((line) => (
               <span key={line} className="block">
                 {line}
