@@ -69,8 +69,9 @@ function ProductCard({ product, brand, onQuote, compared, onToggleCompare }) {
           <span className="text-xs text-muted"> /{product.unit}</span>
         </p>
         <span className="flex-1" />
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <label className="flex cursor-pointer items-center gap-1.5 text-xs text-muted hover:text-primary">
+        <div className="mt-3 flex items-center justify-end gap-2 sm:justify-between">
+          {/* phones: comparing is on the product page, so the card keeps just its button (as in the Amazon app) */}
+          <label className="hidden cursor-pointer sm:flex items-center gap-1.5 text-xs text-muted hover:text-primary">
             <input type="checkbox" checked={compared} onChange={() => onToggleCompare(product.id)} className="h-3.5 w-3.5 accent-primary" />
             Compare
           </label>

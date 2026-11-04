@@ -37,14 +37,14 @@ export default function BrandBar({ brands, selected, onChange }) {
   const ordered = [...brands.filter((b) => selected.includes(b.brand.id)), ...brands.filter((b) => !selected.includes(b.brand.id))];
 
   const tile = (active) =>
-    `relative flex h-[5.5rem] w-32 shrink-0 flex-col items-center justify-center gap-1 rounded-lg border bg-surface px-2 text-center transition ${
+    `relative flex h-14 w-28 shrink-0 sm:h-[5.5rem] sm:w-32 flex-col items-center justify-center gap-1 rounded-lg border bg-surface px-2 text-center transition ${
       active ? 'border-primary ring-2 ring-primary/30' : 'border-line hover:border-ink/40 hover:shadow-sm'
     }`;
 
   return (
     <section aria-label="Brands">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold text-ink">Brands</h2>
+        <h2 className="text-sm font-bold text-ink sm:text-base">Brands</h2>
         <div className="flex items-center gap-3">
           {selected.length > 0 && (
             <button type="button" onClick={() => onChange([])} className="text-sm text-primary hover:underline">
@@ -81,7 +81,7 @@ export default function BrandBar({ brands, selected, onChange }) {
                   </span>
                 )}
                 {/* the brand's name set like a logo (no logo files yet) */}
-                <span className="line-clamp-2 font-display text-[0.95rem] font-bold leading-tight tracking-tight text-ink">{shortBrandName(brand)}</span>
+                <span className="line-clamp-2 font-display text-[0.85rem] font-bold sm:text-[0.95rem] leading-tight tracking-tight text-ink">{shortBrandName(brand)}</span>
                 <span className="text-[0.7rem] text-muted">
                   {count} product{count === 1 ? '' : 's'}
                 </span>

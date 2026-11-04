@@ -109,6 +109,37 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
   });
 
 
+  // the left-hand filters (a full-screen panel on phones)
+  const filterPanel = (
+    <>
+      <CategoryTree key={category ?? 'all'} tree={tree} category={category} subcategory={subcategory?.slug} hrefFor={categoryHref} />
+      <FilterSection title="New Arrivals">
+        <label className="flex cursor-pointer items-center gap-2 py-1 text-sm hover:text-primary">
+          <input type="checkbox" checked={filters.fresh} onChange={(e) => update({ fresh: e.target.checked })} className="h-4 w-4 accent-[var(--primary)]" />
+          New arrivals only
+        </label>
+      </FilterSection>
+      <FilterSection title="Price">
+        {band && (
+          <button type="button" onClick={() => update({ price: '' })} className="flex items-center gap-0.5 py-1 text-sm hover:text-primary hover:underline">
+            <Icon name="chevronLeft" className="h-3 w-3" /> Any price
+          </button>
+        )}
+        {PRICE_BANDS.map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            onClick={() => update({ price: b.id })}
+            aria-pressed={b.id === filters.price}
+            className={`block py-1 text-left text-sm hover:text-primary hover:underline ${b.id === filters.price ? 'font-bold' : ''}`}
+          >
+            {b.label}
+          </button>
+        ))}
+      </FilterSection>
+    </>
+  );
+
   return (
     <main className="mx-auto max-w-7xl px-4 pb-28 pt-[calc(var(--header-h)+1.25rem)] sm:pb-14">
       <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted">
@@ -140,7 +171,7 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
       </nav>
 
       <div className="mb-5">
-        <h1 className="font-display text-3xl font-semibold tracking-tight md:text-4xl">{title}</h1>
+        <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{title}</h1>
         <p className="mt-1 text-sm text-muted">
           {range}
           {products.length.toLocaleString('en-IN')} result{products.length === 1 ? '' : 's'}
@@ -156,67 +187,62 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
       </div>
 
 
+      {/* phones: a sticky bar with Filters and Sort, as in the Amazon app */}
+      <div className="sticky top-[var(--header-h)] z-20 -mx-4 mb-3 flex items-center gap-2 border-b border-line bg-bg/95 px-4 py-2 backdrop-blur lg:hidden">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen(true)}
+          className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3.5 py-1.5 text-sm font-semibold text-ink"
+        >
+          <Icon name="grid" className="h-4 w-4" /> Filters
+          {activeCount + (subcategory ? 1 : 0) > 0 && (
+            <span className="grid h-5 min-w-5 place-items-center rounded-full bg-primary px-1 text-[11px] text-white">{activeCount + (subcategory ? 1 : 0)}</span>
+          )}
+        </button>
+        <SortSelect value={filters.sort} onChange={(sort) => update({ sort })} className="ml-auto" />
+      </div>
+
+      {/* phones: the filters open full screen */}
+      {filtersOpen && (
+        <div role="dialog" aria-modal="true" aria-label="Filters" className="fixed inset-0 z-[60] flex flex-col bg-surface lg:hidden">
+          <div className="flex items-center justify-between border-b border-line px-4 py-3">
+            <h2 className="text-lg font-bold">Filters</h2>
+            <button type="button" onClick={() => setFiltersOpen(false)} aria-label="Close filters" className="grid h-9 w-9 place-items-center rounded-full hover:bg-surface-2">
+              <Icon name="close" className="h-5 w-5" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto px-4 pb-6 pt-2">{filterPanel}</div>
+          <div className="border-t border-line p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
+            <Button className="w-full rounded-full" onClick={() => setFiltersOpen(false)}>
+              Show {products.length.toLocaleString('en-IN')} result{products.length === 1 ? '' : 's'}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-6 lg:grid-cols-[14rem_minmax(0,1fr)]">
         {/* left: categories, each opening to its subcategories */}
-        <aside className={`${filtersOpen ? 'block' : 'hidden'} lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:block lg:max-h-[calc(100vh-var(--header-h)-2rem)] lg:self-start lg:overflow-y-auto lg:border-r lg:border-line lg:pr-4`}>
-          <CategoryTree key={category ?? 'all'} tree={tree} category={category} subcategory={subcategory?.slug} hrefFor={categoryHref} />
-          <FilterSection title="New Arrivals">
-            <label className="flex cursor-pointer items-center gap-2 py-1 text-sm hover:text-primary">
-              <input type="checkbox" checked={filters.fresh} onChange={(e) => update({ fresh: e.target.checked })} className="h-4 w-4 accent-[var(--primary)]" />
-              New arrivals only
-            </label>
-          </FilterSection>
-          <FilterSection title="Price">
-            {band && (
-              <button type="button" onClick={() => update({ price: '' })} className="flex items-center gap-0.5 py-1 text-sm hover:text-primary hover:underline">
-                <Icon name="chevronLeft" className="h-3 w-3" /> Any price
-              </button>
-            )}
-            {PRICE_BANDS.map((b) => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => update({ price: b.id })}
-                aria-pressed={b.id === filters.price}
-                className={`block py-1 text-left text-sm hover:text-primary hover:underline ${b.id === filters.price ? 'font-bold' : ''}`}
-              >
-                {b.label}
-              </button>
-            ))}
-          </FilterSection>
+        <aside className="hidden lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:block lg:max-h-[calc(100vh-var(--header-h)-2rem)] lg:self-start lg:overflow-y-auto lg:border-r lg:border-line lg:pr-4">
+          {filterPanel}
         </aside>
 
         <div className="min-w-0 space-y-4">
-          {/* search within what's chosen (category, subcategory, brands) */}
-          <SearchBar
-            size="lg"
-            value={typed}
-            onChange={setTyped}
-            onSubmit={() => update({ search: typed })}
-            placeholder={`Search in ${title === 'All Products' ? 'all products' : title} — name, brand or code`}
-          />
+          {/* search within what's chosen (category, subcategory, brands); on phones the header search does this */}
+          <div className="hidden sm:block">
+            <SearchBar
+              size="lg"
+              value={typed}
+              onChange={setTyped}
+              onSubmit={() => update({ search: typed })}
+              placeholder={`Search in ${title === 'All Products' ? 'all products' : title} — name, brand or code`}
+            />
+          </div>
           {/* top: brands in this category — pick one or more to see only their products */}
           <BrandBar brands={brandsHere} selected={filters.brandIds} onChange={(brandIds) => update({ brandIds })} />
           {codeMatch && <CodeMatch product={codeMatch} onQuote={onQuote} />}
           {category && !subcategory && !filters.search && !activeCount && <NewArrivalsStrip category={category} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />}
-          <div className="flex items-center justify-between gap-3">
-            <Button variant="secondary" size="sm" className="lg:hidden" onClick={() => setFiltersOpen((o) => !o)} aria-expanded={filtersOpen}>
-              <Icon name="grid" className="h-4 w-4" /> {filtersOpen ? 'Hide filters' : 'Categories & filters'}
-            </Button>
-            <label className="ml-auto flex items-center gap-2 text-sm text-muted">
-              Sort by
-              <select
-                value={filters.sort}
-                onChange={(e) => update({ sort: e.target.value })}
-                className="rounded-lg border border-line bg-surface px-2 py-1.5 text-sm text-ink outline-none focus:border-primary"
-              >
-                {SORT_OPTIONS.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          <div className="hidden items-center justify-end gap-3 lg:flex">
+            <SortSelect value={filters.sort} onChange={(sort) => update({ sort })} label />
           </div>
           {/* three across: the filters take the left of the page */}
           <ProductGrid className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" products={shown} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />
@@ -227,7 +253,25 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
   );
 }
 
-
+/** The "Sort by" menu (with its label on wide screens). */
+function SortSelect({ value, onChange, label = false, className = '' }) {
+  return (
+    <label className={`flex items-center gap-2 text-sm text-muted ${className}`}>
+      <span className={label ? '' : 'sr-only'}>Sort by</span>
+      <select
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="rounded-full border border-line bg-surface px-3 py-1.5 text-sm text-ink outline-none focus:border-primary lg:rounded-lg lg:px-2"
+      >
+        {SORT_OPTIONS.map((o) => (
+          <option key={o.id} value={o.id}>
+            {o.id === 'relevance' && !label ? 'Sort: Featured' : o.label}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
 
 /** One block of the left-hand filters, under its bold heading (as on Amazon). */
 function FilterSection({ title, children }) {

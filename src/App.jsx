@@ -102,6 +102,7 @@ export default function App() {
   // pages where customers pick products — they get the "N selected · Proceed to quote" bar
   const shopping = ['/', '/products', '/new-arrivals', '/brands', '/compare'].includes(path) || /^\/(category|brand|product)\//.test(path);
   const showQuoteBar = shopping && itemCount > 0;
+  const onProductPage = path.startsWith('/product/');
 
   // product page: adds the chosen brand and quantity, staying on the page (it shows a "View quote" link)
   const addToQuote = (product, brandId, quantity) => {
@@ -232,8 +233,8 @@ export default function App() {
         (path.startsWith('/track/') && <TrackQuotePage quotationId={decodeURIComponent(path.slice('/track/'.length)).toUpperCase()} />) ?? <NotFound />}
 
       <Footer />
-      {!path.startsWith('/compare') && <CompareBar count={compareIds.length} onCompare={openCompare} onClear={() => setCompareIds([])} raised={showQuoteBar} />}
-      {showQuoteBar && <QuoteBar count={itemCount} onProceed={openQuote} />}
+      {!path.startsWith('/compare') && <CompareBar count={compareIds.length} onCompare={openCompare} onClear={() => setCompareIds([])} raised={showQuoteBar || onProductPage} />}
+      {showQuoteBar && <QuoteBar count={itemCount} onProceed={openQuote} phoneHidden={onProductPage} />}
       <MobileNav path={path} quoteCount={itemCount} onOpenQuotes={openQuote} />
 
       {story && <StoryViewer groups={story.groups} start={story.start} onClose={closeStory} onSeen={markSeen} />}
