@@ -4,10 +4,11 @@ import { api } from '../utils/api';
 
 const SESSION_KEY = 'at-admin-session';
 
-// sessionStorage: the session ends when the browser tab is closed
+// localStorage: the sign-in lasts across tabs and browser restarts until "Log out" (or the server ends it, after
+// 180 hours or a password reset). sessionStorage signed staff out whenever a tab closed or a phone discarded it.
 export const loadSession = () => {
   try {
-    return JSON.parse(sessionStorage.getItem(SESSION_KEY));
+    return JSON.parse(localStorage.getItem(SESSION_KEY));
   } catch {
     return null;
   }
@@ -15,7 +16,7 @@ export const loadSession = () => {
 
 export const saveSession = (session) => {
   try {
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
   } catch {
     /* storage unavailable — the session still works until the page is reloaded */
   }
@@ -23,7 +24,7 @@ export const saveSession = (session) => {
 
 export const clearSession = () => {
   try {
-    sessionStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
   } catch {
     /* nothing to clear */
   }
@@ -37,11 +38,14 @@ const query = (params) => {
   return q.size ? `?${q}` : '';
 };
 
-/** CRUD calls for each admin resource. `onUnauthorized` runs when the session is no longer accepted. */
+/**
+ * CRUD calls for each admin resource. `onUnauthorized` runs when the session is no longer accepted (401).
+ * A 403 only means this account may not do that one thing: it shows as an error, it doesn't sign anyone out.
+ */
 export function createAdminApi(token, onUnauthorized) {
   const call = (path, options = {}) =>
     api(path, { ...options, token, timeout: options.timeout ?? 20000 }).catch((err) => {
-      if (err.status === 401 || err.status === 403) onUnauthorized();
+      if (err.status === 401) onUnauthorized();
       throw err;
     });
 
