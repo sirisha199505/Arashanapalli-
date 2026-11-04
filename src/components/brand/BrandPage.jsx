@@ -67,14 +67,14 @@ export default function BrandPage({ brand, query, onQuote, compareIds, onToggleC
         <span className="text-ink">{brand.name}</span>
       </nav>
 
-      <Card className="mb-6 grid gap-6 p-5 md:grid-cols-[1fr_auto] md:p-6">
+      <Card className="mb-6 p-5 md:p-6">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
             Class · <span className="text-primary">{brand.tier}</span>
           </p>
           <h1 className="mt-1 font-display text-3xl font-semibold tracking-tight md:text-4xl">{brand.name}</h1>
           <p className="mt-1 text-sm text-muted">
-            Brand code <span className="font-mono font-semibold text-ink">{brand.code}</span> · {all.length.toLocaleString('en-IN')} products
+            Brand code <span className="font-mono font-semibold text-ink">{brand.code}</span> · {groupByType(all).length.toLocaleString('en-IN')} products
             {brand.series?.length ? ` · ${brand.series.length} series` : ''}
           </p>
           <div className="mt-4">
@@ -88,11 +88,12 @@ export default function BrandPage({ brand, query, onQuote, compareIds, onToggleC
             </div>
           </div>
         </div>
-        <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm md:w-72 md:grid-cols-1">
+        {/* the brand's facts across the card's full width (a tall column beside the name left a large empty area) */}
+        <dl className="mt-5 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-line pt-4 text-sm sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
           {BRAND_SPEC_FIELDS.filter((f) => brand.specs?.[f.key]).map((f) => (
-            <div key={f.key}>
+            <div key={f.key} className="min-w-0">
               <dt className="text-xs text-muted">{f.label}</dt>
-              <dd className="font-medium">{brand.specs[f.key]}</dd>
+              <dd className="font-medium leading-snug">{brand.specs[f.key]}</dd>
             </div>
           ))}
         </dl>
