@@ -34,6 +34,15 @@ const saveCopy = (data) => {
   }
 };
 
+/** Drops this browser's saved copy, so the next visit waits for the live catalog (used after a change in the admin). */
+export const forgetSavedCatalog = () => {
+  try {
+    localStorage.removeItem(CACHE_KEY);
+  } catch {
+    /* no storage: nothing saved */
+  }
+};
+
 /** Puts a catalog in place of the bundled one; false if it's empty. */
 const apply = (data) => {
   const { categories, brands, products, packages } = data ?? {};

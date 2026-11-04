@@ -4,6 +4,7 @@ import { Button, Card, EmptyState, Icon } from '../ui';
 import BrandDropdown from './BrandDropdown';
 import QuoteLineRow from './QuoteLineRow';
 import TotalsSummary from './TotalsSummary';
+import PackagesStrip from '../product/PackagesStrip';
 import { getCategoryIcon, shortBrandName } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 
@@ -56,6 +57,7 @@ export default function QuoteCart({ quote, savedCount, onSaveQuotation, onSetBra
             />
           )}
         </Card>
+        <PackagesStrip title={lines.length ? 'Add a ready-made package' : 'Or start from a ready-made package'} />
       </div>
 
       {/* right: totals and next steps */}

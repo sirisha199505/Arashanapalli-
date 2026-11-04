@@ -1,6 +1,7 @@
 // Admin API client. The admin's session token comes from logging in; the backend checks it on every request.
 // Nothing here is a secret: without a valid admin session the backend refuses every admin call.
 import { api } from '../utils/api';
+import { forgetSavedCatalog } from '../data/loadCatalog';
 
 const SESSION_KEY = 'at-admin-session';
 
@@ -44,10 +45,18 @@ const query = (params) => {
  */
 export function createAdminApi(token, onUnauthorized) {
   const call = (path, options = {}) =>
-    api(path, { ...options, token, timeout: options.timeout ?? 20000 }).catch((err) => {
-      if (err.status === 401) onUnauthorized();
-      throw err;
-    });
+    api(path, { ...options, token, timeout: options.timeout ?? 20000 }).then(
+      (res) => {
+        // a change here may add, edit or hide products: the website in this browser then loads the new catalog
+        // instead of opening with its saved copy
+        if (options.method && options.method !== 'GET') forgetSavedCatalog();
+        return res;
+      },
+      (err) => {
+        if (err.status === 401) onUnauthorized();
+        throw err;
+      },
+    );
 
   const resource = (name) => ({
     list: (params = {}) => call(`/${name}${query(params)}`),

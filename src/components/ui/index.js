@@ -15,3 +15,4 @@ export { default as SearchBar } from './SearchBar';
 export { default as Section } from './Section';
 export { default as Tabs } from './Tabs';
 export { default as TextField } from './TextField';
+export { default as Breadcrumb } from './Breadcrumb';

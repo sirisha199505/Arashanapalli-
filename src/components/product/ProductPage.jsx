@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { BRAND_SPEC_FIELDS, PRODUCTS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { getQuery } from '../../hooks/useRoute';
-import { STOCK, brandPath, categoryPath, dynamicCode, getBrandDetails, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice, getVariants, groupByType, nameParts, shortBrandName } from '../../utils/catalog';
+import { STOCK, brandPath, categoryPath, slugify, dynamicCode, getBrandDetails, getBrandsForProduct, getProductSeries, getStartingPrice, getUnitPrice, getVariants, groupByType, nameParts, shortBrandName } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
 import { whatsAppUrl } from '../../utils/share';
-import { Badge, Button, Card, Icon, QuantityInput } from '../ui';
+import { Badge, Breadcrumb, Button, Card, Icon, QuantityInput } from '../ui';
 import ProductCard, { PRODUCT_GRID } from './ProductCard';
 import ProductImage from './ProductImage';
 import VariantPicker from './VariantPicker';
@@ -44,6 +44,27 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
     image: product.image ?? undefined,
   });
 
+  // opened from a brand (its page, or a category filtered to it): Home › Brands › Godrej › Category › … › Product
+  const fromBrand = brands.find((b) => b.id === getQuery().get('brand'));
+  const keep = (q) => {
+    const s = new URLSearchParams(q);
+    if (fromBrand) s.set('brand', fromBrand.id);
+    const out = s.toString();
+    return out ? `?${out}` : '';
+  };
+  const trail = [
+    { label: 'Home', href: '/' },
+    ...(fromBrand
+      ? [
+          { label: 'Brands', href: '/brands' },
+          { label: fromBrand.name, href: brandPath(fromBrand) },
+        ]
+      : [{ label: 'Products', href: '/products' }]),
+    { label: product.category, href: categoryPath(product.category) + keep({}) },
+    ...(product.subcategory ? [{ label: product.subcategory, href: categoryPath(product.category) + keep({ sub: slugify(product.subcategory) }) }] : []),
+    { label: product.name },
+  ];
+
   const add = () => {
     onAddToQuote(product, brand.id, quantity);
     setAdded({ brand, quantity });
@@ -51,21 +72,7 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-48 pt-[calc(var(--header-h)+1.25rem)] lg:pb-14">
-      <nav aria-label="Breadcrumb" className="mb-4 flex flex-wrap items-center gap-1 text-xs text-muted">
-        <a href="/" className="hover:text-primary">
-          Home
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        <a href="/products" className="hover:text-primary">
-          Products
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        <a href={categoryPath(product.category)} className="hover:text-primary">
-          {product.category}
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        <span className="truncate text-ink">{product.name}</span>
-      </nav>
+      <Breadcrumb items={trail} className="mb-4" />
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)_20rem] lg:items-start">
         <Card className="relative overflow-hidden lg:sticky lg:top-[calc(var(--header-h)+1rem)] lg:row-span-2">
@@ -86,7 +93,7 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
                 Code <span className="font-mono font-semibold text-ink">{product.code}</span>
               </span>
             )}
-            <a href={categoryPath(product.category)} className="text-primary hover:underline">
+            <a href={categoryPath(product.category) + keep({})} className="text-primary hover:underline">
               {product.category}
             </a>
             <span>
@@ -278,13 +285,13 @@ export default function ProductPage({ product, onAddToQuote, onOpenQuote, onQuot
       <section className="mt-12">
         <div className="mb-3 flex items-end justify-between gap-4">
           <h2 className="text-xl font-semibold">More in {product.category}</h2>
-          <a href={categoryPath(product.category)} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline">
+          <a href={categoryPath(product.category) + keep({})} className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-primary hover:underline">
             See all <Icon name="arrow" className="h-4 w-4" />
           </a>
         </div>
         <div className={PRODUCT_GRID}>
           {relatedTo(product).map((p) => (
-            <ProductCard key={p.id} product={p} onQuote={onQuote} compared={compareIds.includes(p.id)} onToggleCompare={onToggleCompare} />
+            <ProductCard key={p.id} product={p} brand={fromBrand && p.brandIds.includes(fromBrand.id) ? fromBrand : undefined} onQuote={onQuote} compared={compareIds.includes(p.id)} onToggleCompare={onToggleCompare} />
           ))}
         </div>
       </section>

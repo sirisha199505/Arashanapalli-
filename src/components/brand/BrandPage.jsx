@@ -2,10 +2,10 @@ import { useEffect, useMemo, useRef } from 'react';
 import { BRAND_SPEC_FIELDS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { navigate } from '../../hooks/useRoute';
-import { SORT_OPTIONS, categoryPath, getBrandProducts, getCategories, getUnitPrice, groupByType, slugify } from '../../utils/catalog';
+import { SORT_OPTIONS, brandPath, categoryPath, getBrandProducts, getCategories, getUnitPrice, groupByType, slugify } from '../../utils/catalog';
 import Pagination from '../product/Pagination';
 import ProductGrid from '../product/ProductGrid';
-import { Badge, Card, Chip, Icon } from '../ui';
+import { Badge, Breadcrumb, Card, Chip } from '../ui';
 
 const PAGE_SIZE = 24;
 
@@ -18,6 +18,7 @@ const SORTERS = {
 /** /brand/<id>: the brand (class, code, specs), its series, the categories it covers, and its products at its own prices. */
 export default function BrandPage({ brand, query, onQuote, compareIds, onToggleCompare }) {
   const seriesId = Number(query.get('series')) || null;
+  const activeSeries = brand.series?.find((s) => s.id === seriesId);
   const categorySlug = query.get('category') ?? '';
   const sort = query.get('sort') ?? 'relevance';
   const requestedPage = Math.max(1, parseInt(query.get('page'), 10) || 1);
@@ -55,17 +56,15 @@ export default function BrandPage({ brand, query, onQuote, compareIds, onToggleC
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-28 pt-[calc(var(--header-h)+1.25rem)] sm:pb-14">
-      <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted">
-        <a href="/" className="hover:text-primary">
-          Home
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        <a href="/brands" className="hover:text-primary">
-          Brands
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        <span className="text-ink">{brand.name}</span>
-      </nav>
+      <Breadcrumb
+        items={[
+          { label: 'Home', href: '/' },
+          { label: 'Brands', href: '/brands' },
+          { label: brand.name, href: brandPath(brand) },
+          ...(activeSeries ? [{ label: activeSeries.name, href: brandPath(brand, activeSeries.id) }] : []),
+          ...(category ? [{ label: category }] : []),
+        ]}
+      />
 
       <Card className="mb-6 p-5 md:p-6">
         <div className="min-w-0">

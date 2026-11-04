@@ -1,12 +1,13 @@
 import { BRAND_SPEC_FIELDS } from '../../data/catalog';
-import { brandPath, getBrandProducts } from '../../utils/catalog';
+import { brandPath, getBrandProducts, groupByType } from '../../utils/catalog';
 import { Badge, Card } from '../ui';
 
 const ORIGIN = BRAND_SPEC_FIELDS.find((f) => f.key === 'origin');
 
 /** A brand (the sub-class) with its series (the individual level) as links. `onSelect` turns it into a picker instead of a link. */
 export default function BrandCard({ brand, onSelect, selected = false }) {
-  const count = getBrandProducts(brand).length;
+  // one per product type (sizes / shades together), the same count the brand's page shows
+  const count = groupByType(getBrandProducts(brand)).length;
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">

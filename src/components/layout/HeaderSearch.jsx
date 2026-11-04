@@ -21,7 +21,9 @@ export default function HeaderSearch({ path, className = '' }) {
   const [category, setCategory] = useState('');
   const [open, setOpen] = useState(false);
   const [highlight, setHighlight] = useState(-1);
+  const [emptyError, setEmptyError] = useState(false);
   const rootRef = useRef(null);
+  const inputRef = useRef(null);
 
   // show what the current listing is searching for
   const urlQuery = getQuery().get('q') ?? '';
@@ -30,6 +32,7 @@ export default function HeaderSearch({ path, className = '' }) {
     setText(onListing ? urlQuery : '');
     setCategory(categoryFromPath(path));
     setOpen(false);
+    setEmptyError(false);
   }, [path, urlQuery]);
 
   const term = useDeferredValue(text).trim();
@@ -47,6 +50,12 @@ export default function HeaderSearch({ path, className = '' }) {
 
   const showResults = () => {
     const q = text.trim();
+    // nothing typed: ask for a search term instead of jumping to the products page
+    if (!q) {
+      setEmptyError(true);
+      inputRef.current?.focus();
+      return;
+    }
     const { product, brand } = parseCode(q);
     setOpen(false);
     if (product) return navigate(`${productPath(product)}${brand ? `?brand=${brand.id}` : ''}`);
@@ -77,7 +86,9 @@ export default function HeaderSearch({ path, className = '' }) {
             showResults();
           }
         }}
-        className="flex h-10 overflow-hidden rounded-lg border border-line bg-surface shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+        className={`flex h-10 overflow-hidden rounded-lg border bg-surface shadow-sm focus-within:ring-2 ${
+          emptyError ? 'border-primary ring-2 ring-primary/30' : 'border-line focus-within:border-primary focus-within:ring-primary/20'
+        }`}
       >
         <select
           aria-label="Search in category"
@@ -95,10 +106,15 @@ export default function HeaderSearch({ path, className = '' }) {
           ))}
         </select>
         <input
+          ref={inputRef}
           type="search"
+          aria-invalid={emptyError || undefined}
+          aria-describedby={emptyError ? 'search-empty-error' : undefined}
+          onBlur={() => setEmptyError(false)}
           value={text}
           onChange={(e) => {
             setText(e.target.value);
+            setEmptyError(false);
             setOpen(true);
             setHighlight(-1);
           }}
@@ -114,6 +130,12 @@ export default function HeaderSearch({ path, className = '' }) {
           <Icon name="search" className="h-5 w-5" />
         </button>
       </form>
+
+      {emptyError && (
+        <p id="search-empty-error" role="alert" className="absolute left-0 top-full z-50 mt-1 rounded-md bg-ink px-3 py-1.5 text-xs font-medium text-white shadow-lg">
+          Please type a product name or code to search.
+        </p>
+      )}
 
       {open && term && (
         <div id="search-suggestions" className="absolute inset-x-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-line bg-surface shadow-xl">

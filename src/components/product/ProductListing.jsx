@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { PRODUCTS } from '../../data/catalog';
 import usePageMeta from '../../hooks/usePageMeta';
 import { navigate } from '../../hooks/useRoute';
-import { SORT_OPTIONS, categoryPath, getBrand, getCategoryTree, getProductByCode, getStartingPrice, groupByType, searchCatalog, shortBrandName } from '../../utils/catalog';
+import { SORT_OPTIONS, brandPath, categoryPath, getBrand, getCategoryTree, getProductByCode, getStartingPrice, groupByType, searchCatalog, shortBrandName } from '../../utils/catalog';
 import { formatCurrency } from '../../utils/format';
-import { Button, Card, Icon, SearchBar } from '../ui';
+import { Breadcrumb, Button, Card, Icon, SearchBar } from '../ui';
 import BrandBar from './BrandBar';
 import CategoryTree from './CategoryTree';
 import NewArrivalsStrip from './NewArrivalsStrip';
+import PackagesStrip from './PackagesStrip';
 import ProductGrid from './ProductGrid';
 import Pagination from './Pagination';
 import ProductImage from './ProductImage';
@@ -95,10 +96,26 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
     .filter((b) => b.brand)
     .sort((a, b) => b.count - a.count || a.brand.name.localeCompare(b.brand.name));
   const activeCount = filters.brandIds.length + (filters.price ? 1 : 0) + (filters.fresh ? 1 : 0);
-  // a category link keeps the search but starts the brands afresh (they differ per category)
-  const categoryHref = (c, sub) => basePath(c) + toQueryString({ ...filters, sub: sub ?? '', brandIds: [] });
+  // a category link keeps the search, and keeps only the chosen brands that sell in that category (so a visit that
+  // started on a brand's page stays on that brand, and its breadcrumb with it)
+  const categoryHref = (c, sub) =>
+    basePath(c) + toQueryString({ ...filters, sub: sub ?? '', brandIds: filters.brandIds.filter((id) => !c || PRODUCTS.some((p) => p.category === c && p.brandIds.includes(id))) });
 
   const title = subcategory?.name ?? category ?? 'All Products';
+  // one brand chosen (e.g. a category opened from a brand's page): the trail runs through that brand, and its links keep it
+  const trailBrand = filters.brandIds.length === 1 ? getBrand(filters.brandIds[0]) : undefined;
+  const trail = [
+    { label: 'Home', href: '/' },
+    ...(trailBrand
+      ? [
+          { label: 'Brands', href: '/brands' },
+          { label: trailBrand.name, href: brandPath(trailBrand) },
+        ]
+      : []),
+    ...(trailBrand && category ? [] : [{ label: 'Products', href: '/products' + (trailBrand ? `?brand=${trailBrand.id}` : '') }]),
+    ...(category ? [{ label: category, href: basePath(category) + toQueryString({ ...filters, sub: '' }) }] : []),
+    ...(subcategory ? [{ label: subcategory.name }] : []),
+  ];
   const range = products.length ? `${((page - 1) * PAGE_SIZE + 1).toLocaleString('en-IN')}–${((page - 1) * PAGE_SIZE + shown.length).toLocaleString('en-IN')} of ` : '';
   usePageMeta({
     title: category ? title : 'Products',
@@ -142,33 +159,7 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
 
   return (
     <main className="mx-auto max-w-7xl px-4 pb-28 pt-[calc(var(--header-h)+1.25rem)] sm:pb-14">
-      <nav aria-label="Breadcrumb" className="mb-3 flex flex-wrap items-center gap-1 text-xs text-muted">
-        <a href="/" className="hover:text-primary">
-          Home
-        </a>
-        <Icon name="chevronRight" className="h-3 w-3" />
-        {category ? (
-          <>
-            <a href="/products" className="hover:text-primary">
-              Products
-            </a>
-            <Icon name="chevronRight" className="h-3 w-3" />
-            {subcategory ? (
-              <>
-                <a href={categoryHref(category)} className="hover:text-primary">
-                  {category}
-                </a>
-                <Icon name="chevronRight" className="h-3 w-3" />
-                <span className="text-ink">{subcategory.name}</span>
-              </>
-            ) : (
-              <span className="text-ink">{category}</span>
-            )}
-          </>
-        ) : (
-          <span className="text-ink">Products</span>
-        )}
-      </nav>
+      <Breadcrumb items={trail} />
 
       <div className="mb-5">
         <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl md:text-4xl">{title}</h1>
@@ -240,12 +231,13 @@ export default function ProductListing({ category, query, onQuote, compareIds, o
           {/* top: brands in this category — pick one or more to see only their products */}
           <BrandBar brands={brandsHere} selected={filters.brandIds} onChange={(brandIds) => update({ brandIds })} />
           {codeMatch && <CodeMatch product={codeMatch} onQuote={onQuote} />}
+          {!category && !filters.search && !activeCount && page === 1 && <PackagesStrip className="border-b border-line pb-6" />}
           {category && !subcategory && !filters.search && !activeCount && <NewArrivalsStrip category={category} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />}
           <div className="hidden items-center justify-end gap-3 lg:flex">
             <SortSelect value={filters.sort} onChange={(sort) => update({ sort })} label />
           </div>
           {/* three across: the filters take the left of the page */}
-          <ProductGrid className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" products={shown} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />
+          <ProductGrid className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" products={shown} brand={trailBrand} onQuote={onQuote} compareIds={compareIds} onToggleCompare={onToggleCompare} />
           <Pagination page={page} totalPages={totalPages} hrefFor={(n) => basePath(category) + toQueryString({ ...filters, page: n })} />
         </div>
       </div>
