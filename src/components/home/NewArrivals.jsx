@@ -23,9 +23,9 @@ export default function NewArrivals({ onQuote, compareIds, onToggleCompare }) {
         </a>
       }
     >
-      <div role="tablist" aria-label="New arrivals by category" className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div role="tablist" aria-label="New arrivals by category" className="-mx-4 mb-5 flex gap-2 overflow-x-auto px-4 py-1 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">
         {categories.map((c) => (
-          <Chip key={c} role="tab" aria-selected={c === active} active={c === active} onClick={() => setActive(c)}>
+          <Chip key={c} role="tab" className="shrink-0" aria-selected={c === active} active={c === active} onClick={() => setActive(c)}>
             <span className="whitespace-nowrap">{c}</span>
           </Chip>
         ))}
